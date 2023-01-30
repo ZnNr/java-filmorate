@@ -38,7 +38,7 @@ class FilmControllerTest {
     void shouldExceptionWithEmptyName() {
         film.setName("");
         ValidationException e = assertThrows(ValidationException.class, () -> filmController.addNewFilm(film));
-        assertEquals("Ошибка: Максимальная длина описания - 200 символов", e.getMessage());
+        assertEquals("Ошибка: название не может быть пустым", e.getMessage());
     }
 
     @Test

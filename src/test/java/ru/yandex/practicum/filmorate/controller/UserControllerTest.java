@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.controller;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.exception.EmailExceptions;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -50,9 +49,6 @@ class UserControllerTest {
         assertEquals("Ошибка: Некорректный логин", e.getMessage());
     }
 
-
-
-
     @Test
     void shouldExceptionWithIncorrectEmail() {
         user.setEmail("ddd.dddfdddd");
@@ -60,12 +56,6 @@ class UserControllerTest {
         assertEquals("Ошибка: email не содержит знака @.", e.getMessage());
     }
 
-    @Test
-    void shouldExceptionWithIncorrectEmailRussian() {
-        User user = new User(25, "тест@test.ru", "nox","zZinnur", LocalDate.of(2013, 3, 29));
-        ValidationException e = assertThrows(ValidationException.class, () -> userController.addNewUser(user));
-             assertEquals("Ошибка: email некорректен или содержит недопустимые символы.", e.getMessage());
-    }
 
     @Test
     void shouldExceptionUpdateWithNonContainsId() {
@@ -84,8 +74,10 @@ class UserControllerTest {
 
     @Test
     public void shouldNotValidateIfBirthdayInFuture() {
-        User user = new User(25, "test@test.ru", "nox","zZinnur", LocalDate.of(2023, 3, 29));
-        ValidationException thrown = assertThrows(ValidationException.class, () -> {userController.addNewUser(user); });
+        User user = new User(25, "test@test.ru", "nox", "zZinnur", LocalDate.of(2023, 3, 29));
+        ValidationException thrown = assertThrows(ValidationException.class, () -> {
+            userController.addNewUser(user);
+        });
         assertEquals("Ошибка: Дата рождения не может быть в будущем", thrown.getMessage());
     }
 

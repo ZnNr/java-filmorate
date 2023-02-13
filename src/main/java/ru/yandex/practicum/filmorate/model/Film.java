@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -29,13 +30,16 @@ public class Film {
 
     @PositiveOrZero
     private int duration;
-    @PositiveOrZero
+    @JsonIgnore
     private Set<Integer> likes = new HashSet<>();
 
-    public static final Comparator<Film> COMPARE_BY_LIKES = new Comparator<Film>() {
-        @Override
-        public int compare(Film o1, Film o2) {
-            return o1.getLikes().size() - o2.getLikes().size();
-        }
-    };
+    public Film(int id, String name, String description, LocalDate releaseDate, int duration) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+        this.likes = new HashSet<>();
+    }
+
 }

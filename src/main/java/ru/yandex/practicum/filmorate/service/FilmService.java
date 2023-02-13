@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,23 +49,23 @@ public class FilmService {
 
     public void addLike(int userId, int filmId) {
         Film film = filmStorage.getFilmById(filmId);
-        User user = userStorage.getUserById(userId); // В этом методе заодно и валидируется наличие userId
+        User user = userStorage.getUserById(userId);
         film.getLikes().add(user.getId());
         log.info("Пользователь с ID {} поставил лайк фильму {}", userId, filmId);
     }
 
     public void deleteLike(int userId, int filmId) {
         Film film = filmStorage.getFilmById(filmId);
-        User user = userStorage.getUserById(userId); // В этом методе заодно и валидируется наличие userId
+        User user = userStorage.getUserById(userId);
         film.getLikes().remove(user.getId());
         log.info("Пользователь с ID {} убрал лайк с фильма {}", userId, filmId);
     }
 
-    public List<Film> getTopRatedFilms(Integer count) {
-        List<Film> films = filmStorage.getFilms();
-        return films.stream()
-                .sorted(Collections.reverseOrder(Film.COMPARE_BY_LIKES))
-                .limit(count)
+    public List<Film> getTopRatedFilms(int size) {
+        return filmStorage.getFilms()
+                .stream()
+                .sorted((f0, f1) -> f1.getLikes().size() - f0.getLikes().size())
+                .limit(size)
                 .collect(Collectors.toList());
     }
 

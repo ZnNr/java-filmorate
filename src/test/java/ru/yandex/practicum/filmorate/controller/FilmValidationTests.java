@@ -42,12 +42,7 @@ public class FilmValidationTests {
             filmController.addFilm(gapFilm);
         });
     }
-/*
-    @BeforeEach
-    public void addNewFilm() {
-        film = new Film(0, "name", "description", LocalDate.of(2005, Month.MAY, 15), 100);
-    }
-  */
+
 
     @Test
     public void shouldNotValidateIfLongDescription() {

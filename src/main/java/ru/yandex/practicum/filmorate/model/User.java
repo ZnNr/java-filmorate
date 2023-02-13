@@ -1,28 +1,33 @@
 package ru.yandex.practicum.filmorate.model;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
-
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 public class User {
     private int id;
-
-    @Email(message = "Ошибка: Некорректный email")
+    @Email
     @NotBlank
     private String email;
+    @NotBlank
     private String login;
     private String name;
-
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Past
     private LocalDate birthday;
+    private Set<Integer> friends = new HashSet<>();
 
+    public User(String email, String login, String name, LocalDate birthday) {
+        this.email = email;
+        this.login = login;
+        this.name = name;
+        this.birthday = birthday;
+    }
 }

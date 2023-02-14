@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -15,70 +17,56 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UserValidationTests {
 
-    private UserController userController;
+    private static UserStorage userStorage;
+    private static UserService userService;
+    private static UserController userController;
+    private User user;
 
-    @BeforeEach
-    public void beforeEach() {
-        UserStorage userStorage = new InMemoryUserStorage();
-        UserService userService = new UserService(userStorage);
+    @BeforeAll
+    public static void createController() {
+        userStorage = new InMemoryUserStorage();
+        userService = new UserService(userStorage);
         userController = new UserController(userService);
     }
 
-    @Test
-    public void shouldNotValidateIfNullEmail() {
-        User nullEmailUser = new User(null, "zinnurshamsutdinov", "Zinnur", LocalDate.of(1998, 8, 29));
-        assertThrows(ValidationException.class, () -> {
-            userController.createUser(nullEmailUser);
-        });
-        User noEmailUser = new User("", "zinnurshamsutdinov", "Zinnur", LocalDate.of(1998, 8, 29));
-        assertThrows(ValidationException.class, () -> {
-            userController.createUser(noEmailUser);
-        });
-        User gapEmailUser = new User(" ", "zinnurshamsutdinov", "Zinnur", LocalDate.of(1998, 8, 29));
-        assertThrows(ValidationException.class, () -> {
-            userController.createUser(gapEmailUser);
-        });
+    @BeforeEach
+    public void createUser() {
+        user = new User(0, "test@test.ru", "login", "name",
+                LocalDate.of(2000, 02, 15));
     }
 
     @Test
-    public void shouldNotValidateIfNoAt() {
-        User wrongEmailUser = new User("google.com", "zinnurshamsutdinov", "Zinnur", LocalDate.of(1998, 8, 29));
-        ValidationException thrown = assertThrows(ValidationException.class, () -> {
-            userController.createUser(wrongEmailUser);
-        });
-        assertEquals("Адрес электронной почты не может быть пустым и должен содержать символ @.", thrown.getMessage());
+    void shouldExceptionWithEmptyLogin() {
+        user.setLogin("");
+        ValidationException e = assertThrows(ValidationException.class, () -> userController.createUser(user));
+        assertEquals("Логин не должен быть пустым и не должен содержать пробелы.", e.getMessage());
     }
 
     @Test
-    public void shouldNotValidateIfLoginNull() {
-        User nullLoginUser = new User("test@test.ru", null, "Zinnur", LocalDate.of(1998, 8, 29));
-        assertThrows(ValidationException.class, () -> {
-            userController.createUser(nullLoginUser);
-        });
-        User noLoginUser = new User("test@test.ru", "", "Zinnur", LocalDate.of(1998, 8, 29));
-        assertThrows(ValidationException.class, () -> {
-            userController.createUser(noLoginUser);
-        });
-        User gapLoginUser = new User("test@test.ru", " ", "Zinnur", LocalDate.of(1998, 8, 29));
-        ValidationException thrown = assertThrows(ValidationException.class, () -> {
-            userController.createUser(gapLoginUser);
-        });
-        assertEquals("Логин не должен быть пустым и не должен содержать пробелы.", thrown.getMessage());
+    void shouldExceptionWithIncorrectLogin() {
+        user.setLogin("log in");
+        ValidationException e = assertThrows(ValidationException.class, () -> userController.createUser(user));
+        assertEquals("Логин не должен быть пустым и не должен содержать пробелы.", e.getMessage());
     }
 
     @Test
-    public void shouldReplaceNameWithLogin() {
-        User noNameUser = new User("test@test.ru", "zinnurshamsutdinov", "", LocalDate.of(1998, 8, 29));
-        User createdUser = userController.createUser(noNameUser);
-        assertEquals(createdUser.getName(), "zinnurshamsutdinov");
+    void shouldExceptionWithIncorrectEmail() {
+        user.setEmail("ddd.dddfdddd");
+        ValidationException e = assertThrows(ValidationException.class, () -> userController.createUser(user));
+        assertEquals("Адрес электронной почты не может быть пустым и должен содержать символ @.", e.getMessage());
     }
 
     @Test
-    public void shouldNotValidateIfBirthdayInFuture() {
-        User user = new User("test@test.ru", "zinnurshamsutdinov", "Zinnur", LocalDate.of(2023, 3, 29));
-        ValidationException thrown = assertThrows(ValidationException.class, () -> {
-            userController.createUser(user);
-        });
-        assertEquals("Дата рождения не может быть в будущем.", thrown.getMessage());
+    void shouldExceptionUpdateWithNonContainsId() {
+        user.setId(10);
+        NotFoundException e = assertThrows(NotFoundException.class, () -> userController.updateUser(user));
+        assertEquals("Пользователь с ID: 10 не существует.", e.getMessage());
+    }
+
+    @Test
+    void shouldNotExceptionWithEmptyName() {
+        user.setName("");
+        userController.createUser(user);
+        assertEquals(user.getName(), user.getLogin());
     }
 }

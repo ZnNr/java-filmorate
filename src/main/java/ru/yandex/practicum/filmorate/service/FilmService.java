@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -20,9 +19,9 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class FilmService {
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.parse("1895-12-28");
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     //Добавляем новый фильм по запросу, проверив, проходит ли он по параметрам
     public Film addFilm(Film film) {
@@ -30,21 +29,13 @@ public class FilmService {
         filmStorage.addFilm(film);
         return film;
     }
-/*
-    public Film updateFilm(Film film) {
-        validate(film);
-        return filmStorage.updateFilm(film);
-    }
 
-    public List<Film> getFilms() {
-        return filmStorage.getFilms();
-    }
-*/
+
     public Film getFilmById(int id) {
         return filmStorage.getFilmById(id);
     }
 
-    public Film  addLike(Integer id, Integer userId) {
+    public Film addLike(Integer id, Integer userId) {
         Film currentFilm = filmStorage.getFilmById(id);
         userStorage.getUserById(userId);
         currentFilm.getLikes().add(userId);
@@ -52,7 +43,7 @@ public class FilmService {
         return currentFilm;
     }
 
-    public Film  deleteLike(Integer id, Integer userId) {
+    public Film deleteLike(Integer id, Integer userId) {
         Film currentFilm = filmStorage.getFilmById(id);
         userStorage.getUserById(userId);
         if (!currentFilm.getLikes().contains(userId)) {
@@ -63,6 +54,7 @@ public class FilmService {
         log.info("Пользователь с id:" + userId + " удалил свой лайк фильму с id:" + id);
         return currentFilm;
     }
+
     //Получаем коллекцию самых популярных фильмов
     public List<Film> getTopRatedFilms(Integer count) {
         return filmStorage.getFilms().stream()
@@ -70,6 +62,7 @@ public class FilmService {
                 .limit(count)
                 .collect(Collectors.toList());
     }
+
     private int compare(Film f0, Film f1) {
         return Integer.compare(f1.getLikes().size(), f0.getLikes().size());
     }

@@ -17,13 +17,14 @@ import java.util.Map;
 @Component
 public class InMemoryUserStorage implements UserStorage {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final HashMap<Integer, User> users = new HashMap<>();
     private int idGen = 1;
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     public InMemoryUserStorage() {
     }
+
     //Добавляем пользователя
     @Override
     public User createUser(User user) {
@@ -33,6 +34,7 @@ public class InMemoryUserStorage implements UserStorage {
         log.info("Создан пользователь с ID {}: {}", user.getId(), user);
         return user;
     }
+
     //Обновляем пользователя
     @Override
     public User updateUser(User user) {
@@ -45,6 +47,7 @@ public class InMemoryUserStorage implements UserStorage {
         log.info("Обновлен пользователь с ID: {}", user.getId());
         return user;
     }
+
     //Получаем список всех пользователей по запросу
     @Override
     public List<User> getUsers() {
@@ -54,6 +57,7 @@ public class InMemoryUserStorage implements UserStorage {
         }
         return userList;
     }
+
     //Получаем конкретного пользователя
     @Override
     public User getUserById(int id) {

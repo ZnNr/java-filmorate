@@ -26,7 +26,7 @@ public class UserValidationTests {
     public static void createController() {
         userStorage = new InMemoryUserStorage();
         userService = new UserService(userStorage);
-        userController = new UserController(userService);
+        userController = new UserController(userStorage, userService);
     }
 
     @BeforeEach

@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
-import org.slf4j.Logger;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,6 +32,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.info("Добавлен фильм: {}", film);
         return film;
     }
+
     //Обновляем фильм в коллекции, проверив его наличие
     @Override
     public Film updateFilm(Film film) {
@@ -40,7 +41,8 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.info("Фильм обновлен - , {}");
         return film;
     }
-//Получаем список всех фильмов по запросу
+
+    //Получаем список всех фильмов по запросу
     @Override
     public List<Film> getFilms() {
         List<Film> filmList = new ArrayList<>();
@@ -59,7 +61,6 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
         return films.get(filmId);
     }
-
 
 
 }

@@ -10,7 +10,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,8 +34,7 @@ public class Film {
     @JsonIgnore
     private Set<Integer> likes = new HashSet<>();
 
-
-    public Film(int id, String name, String description, LocalDate releaseDate, int duration){
+    public Film(int id, String name, String description, LocalDate releaseDate, int duration) {
         this.id = id;
         this.name = name;
         this.description = description;

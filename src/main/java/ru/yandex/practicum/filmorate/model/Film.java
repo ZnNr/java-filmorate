@@ -19,16 +19,16 @@ public class Film {
 
     private int id;
 
-    @NotBlank
+    @NotBlank(message = "название не может быть пустым")
     private String name;
 
-    @Size(max = 200)
+    @Size(max = 200, message = "Максимальная длина описания - 200 символов")
     private String description;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate releaseDate;
 
-    @PositiveOrZero
+    @PositiveOrZero(message = "Продолжительность фильма должна быть положительной")
     private int duration;
     @JsonIgnore
     private Set<Integer> likes = new HashSet<>();

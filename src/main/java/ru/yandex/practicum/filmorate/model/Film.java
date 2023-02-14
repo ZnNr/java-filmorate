@@ -6,9 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.PositiveOrZero;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,12 +24,12 @@ public class Film {
     @Size(max = 200, message = "Максимальная длина описания - 200 символов")
     private String description;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @NotNull
     private LocalDate releaseDate;
 
-    @PositiveOrZero(message = "Продолжительность фильма должна быть положительной")
+    @Positive(message = "Продолжительность фильма должна быть положительной")
     private int duration;
-    @JsonIgnore
+
     private Set<Integer> likes = new HashSet<>();
 
     public Film(int id, String name, String description, LocalDate releaseDate, int duration) {

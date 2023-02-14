@@ -31,10 +31,6 @@ public class FilmService {
     }
 
 
-    public Film getFilmById(int id) {
-        return filmStorage.getFilmById(id);
-    }
-
     public Film addLike(Integer id, Integer userId) {
         Film currentFilm = filmStorage.getFilmById(id);
         userStorage.getUserById(userId);

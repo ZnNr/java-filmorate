@@ -20,7 +20,7 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.parse("1895-12-28");
-    int id = 0;
+    int randome = 0;
 
     @Autowired
     public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
@@ -89,7 +89,7 @@ public class FilmService {
     }
 
     private int generateId() {
-        return ++id;
+        return ++randome;
     }
 
 }

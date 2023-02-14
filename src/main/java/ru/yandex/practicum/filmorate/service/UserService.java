@@ -24,9 +24,9 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        user.setId(generateId());
         validate(user);
         return userStorage.createUser(user);
+
     }
 
     public User updateUser(User user) {
@@ -97,7 +97,5 @@ public class UserService {
         }
     }
 
-    private int generateId() {
-        return ++id;
-    }
+
 }

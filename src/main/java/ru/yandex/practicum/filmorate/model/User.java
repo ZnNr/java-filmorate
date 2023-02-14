@@ -3,24 +3,23 @@ import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Past;
+import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
-@Setter
-@EqualsAndHashCode
-@ToString
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     private int id;
-    @Email
+    @Email(message = "Проверьте правильность заполнения адреса почты")
     @NotBlank
     private String email;
-    @NotBlank
+    @NotBlank(message = "Логин не должен быть пустым!")
     private String login;
     private String name;
-    @Past
+    @PastOrPresent(message = "День рождения не может быть в будущем!")
     private LocalDate birthday;
     private Set<Integer> friends = new HashSet<>();
 

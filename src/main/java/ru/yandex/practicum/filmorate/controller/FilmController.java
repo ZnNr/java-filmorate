@@ -7,62 +7,59 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
-@Validated
 public class FilmController {
-
-
+    private final FilmStorage filmStorage;
     private final FilmService filmService;
 
+
     @Autowired
-    public FilmController(FilmService filmService) {
+    public FilmController(FilmStorage filmStorage, FilmService filmService) {
+        this.filmStorage = filmStorage;
         this.filmService = filmService;
     }
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
-        log.info("Добавлен фильм: {}", film);
         return filmService.addFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
-        return filmService.updateFilm(film);
+        return filmStorage.updateFilm(film);
     }
 
     @GetMapping
     public List<Film> getFilms() {
-        return filmService.getFilms();
+        return filmStorage.getFilms();
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable int id) {
-        log.info(String.format("Получение фильма с id = %d", id));
-        return filmService.getFilmById(id);
+    public Film getFilmById(@PathVariable("id") @Positive Integer id) {
+        return filmStorage.getFilmById(id);
     }
 
     @PutMapping("/{id}/like/{userID}")
-    public void addLike(@PathVariable int id, @PathVariable int userID) {
-        log.info(String.format("Лайк фильма с id = %d пользователем с id = %d", id, userID));
-        filmService.addLike(userID, id);
+    public Film addLike(@PathVariable("id") @Positive Integer id,
+                        @PathVariable("userId") @Positive Integer userId) {
+        return filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userID}")
-    public void deleteLike(@PathVariable int id, @PathVariable int userID) {
-        log.info(String.format("Удаление лайка с фильма с id = %d пользователем с id = %d", id, userID));
-        filmService.deleteLike(userID, id);
+    public Film deleteLike(@PathVariable("id") @Positive Integer id,
+                           @PathVariable("userId") @Positive Integer userId) {
+        return filmService.deleteLike(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> getTopRatedFilms(@RequestParam(defaultValue = "10") @Positive int count) {
-        log.info("Получение популярных фильмов");
+    public List<Film> getTopRatedFilms(@RequestParam(defaultValue = "10", required = false) @Positive Integer count) {
         return filmService.getTopRatedFilms(count);
     }
 

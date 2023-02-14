@@ -12,13 +12,7 @@ public interface FilmStorage {
 
     List<Film> getFilms();
 
-    Film getFilmById(int id);
-
-    Film deleteFilm(int id);
-
-    void addLike(Film film, int userId);
-
-    void deleteLike(Film film, int userId);
+    Film getFilmById(Integer id);
 
 
 }

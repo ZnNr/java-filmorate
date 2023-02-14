@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.constraints.NotBlank;
@@ -14,12 +15,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class Film {
 
-    private int id;
+    protected int id;
 
-    @NotBlank(message = "название не может быть пустым")
+    @NotBlank(message = "Название не может быть пустым")
     private String name;
 
     @Size(max = 200, message = "Максимальная длина описания - 200 символов")
@@ -33,7 +35,8 @@ public class Film {
     @JsonIgnore
     private Set<Integer> likes = new HashSet<>();
 
-    public Film(int id, String name, String description, LocalDate releaseDate, int duration) {
+
+    public Film(int id, String name, String description, LocalDate releaseDate, int duration){
         this.id = id;
         this.name = name;
         this.description = description;
@@ -41,5 +44,4 @@ public class Film {
         this.duration = duration;
         this.likes = new HashSet<>();
     }
-
 }

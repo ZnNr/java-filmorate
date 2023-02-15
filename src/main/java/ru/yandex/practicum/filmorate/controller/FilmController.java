@@ -47,13 +47,13 @@ public class FilmController {
         return filmStorage.updateFilm(film);
     }
 
-    @PutMapping("/{id}/like/{userID}")
+    @PutMapping("/{id}/like/{userId}")
     public Film addLike(@PathVariable("id") @Positive Integer id,
                         @PathVariable("userId") @Positive Integer userId) {
         return filmService.addLike(id, userId);
     }
 
-    @DeleteMapping("/{id}/like/{userID}")
+    @DeleteMapping("/{id}/like/{userId}")
     public Film deleteLike(@PathVariable("id") @Positive Integer id,
                            @PathVariable("userId") @Positive Integer userId) {
         return filmService.deleteLike(id, userId);

@@ -38,7 +38,7 @@ public class FilmValidationTests {
     }
 
     @BeforeEach
-    public void createFilm() {
+    public void addFilm() {
         film = new Film(0, "name", "description", LocalDate.of(2005, 05, 15), 100);
     }
 

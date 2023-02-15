@@ -52,7 +52,7 @@ public class FilmService {
     }
 
     //Получаем коллекцию самых популярных фильмов
-    public List<Film> getTopRatedFilms(Integer count) {
+    public List<Film> getMostLikedFilms(Integer count) {
         return filmStorage.getFilms().stream()
                 .sorted(this::compare)
                 .limit(count)

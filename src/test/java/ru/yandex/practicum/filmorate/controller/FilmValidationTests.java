@@ -34,7 +34,7 @@ public class FilmValidationTests {
         userStorage = new InMemoryUserStorage();
         userService = new UserService(userStorage);
         filmService = new FilmService(filmStorage, userStorage);
-        filmController = new FilmController(filmStorage, filmService);
+        filmController = new FilmController(filmService);
     }
 
     @BeforeEach

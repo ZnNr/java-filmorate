@@ -17,7 +17,6 @@ import java.util.Map;
 
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
-    private static final LocalDate MIN_RELEASE_DATE = LocalDate.parse("1895-12-28");
     private static final Logger log = LoggerFactory.getLogger(FilmController.class);
     private final Map<Integer, Film> films = new HashMap<>();
     private int idGen = 1;
@@ -29,7 +28,6 @@ public class InMemoryFilmStorage implements FilmStorage {
     //Добавляем новый фильм в коллекцию
     @Override
     public Film addFilm(Film film) {
-        validateFilm(film);
         film.setId(idGen++);
         films.put(film.getId(), film);
         log.info("Добавлен фильм: {}", film);
@@ -66,31 +64,8 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
 
-    //Проверка добавления нового фильма в соответствии с требованиями
-    private void validateFilm(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            log.warn("Валидация не пройдена: отсутствует название фильма.");
-            throw new ValidationException("Название не может быть пустым.");
-        }
-        if (film.getDescription().length() > 200) {
-            log.warn("Валидация не пройдена: описание превышает 200 символов.");
-            throw new ValidationException("Описание превышает 200 символов.");
-        }
-        if (film.getDuration() < 0) {
-            log.warn("Валидация не пройдена: отрицательная продолжительность фильма.");
-            throw new ValidationException("Продолжительность фильма не может быть отрицательным.");
-        }
-        if (getFilms().contains(film)) {
-            log.error("Такой фильм уже есть!, {}", film);
-            throw new ValidationException("Такой фильм уже есть!");
-        }
 
-        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            log.warn("Валидация не пройдена: дата релиза раньше {}", MIN_RELEASE_DATE);
-            throw new ValidationException("Дата релиза фильма должна быть после " + MIN_RELEASE_DATE);
-        }
 
-    }
 
 
 

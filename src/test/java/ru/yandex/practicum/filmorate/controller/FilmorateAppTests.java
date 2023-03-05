@@ -268,7 +268,7 @@ class FilmorateApplicationTests {
                 .releaseDate(LocalDate.of(1960, 1, 1))
                 .duration(109)
                 .rate(1)
-                .mpa(Mpa.builder().id(1).name("Scary Movie").build())
+                .mpa(Mpa.builder().id(1).name("G").build())
                 .likes(new HashSet<>())
                 .genres(new ArrayList<>())
                 .build();

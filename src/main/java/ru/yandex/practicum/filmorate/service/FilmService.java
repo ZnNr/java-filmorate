@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -8,8 +8,8 @@ import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
 
 import java.time.LocalDate;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class FilmService {
 
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.parse("1895-12-28");
@@ -42,8 +42,8 @@ public class FilmService {
         return filmStorage.getFilms();
     }
 
-    public Film getFilmById(int id) {
-        return filmStorage.getFilmById(id);
+    public Film getFilm(int id) {
+        return filmStorage.getFilm(id);
     }
 
     //Проверка добавления нового фильма в соответствии с требованиями
@@ -72,23 +72,23 @@ public class FilmService {
 
     }
 
-    public Film addLike(Integer id, Integer userId) {
-        Film currentFilm = filmStorage.getFilmById(id);
+    public Film addLike(Integer filmId, Integer userId) {
+        Film currentFilm = filmStorage.getFilm(filmId);
         userStorage.getUserById(userId);
         currentFilm.getLikes().add(userId);
-        log.info("Пользователь с id:" + userId + " поставил лайк фильму с id:" + id);
+        log.info("Пользователь с id:" + userId + " поставил лайк фильму с id:" + filmId);
         return currentFilm;
     }
 
-    public Film deleteLike(Integer id, Integer userId) {
-        Film currentFilm = filmStorage.getFilmById(id);
+    public Film deleteLike(Integer filmId, Integer userId) {
+        Film currentFilm = filmStorage.getFilm(filmId);
         userStorage.getUserById(userId);
         if (!currentFilm.getLikes().contains(userId)) {
-            log.error("У фильма с id" + id + " Нет лайка от пользователя с id:" + userId);
+            log.error("У фильма с id" + filmId + " Нет лайка от пользователя с id:" + userId);
             throw new NotFoundException("У фильма нет лайка от этого пользователя");
         }
         currentFilm.getLikes().remove(userId);
-        log.info("Пользователь с id:" + userId + " удалил свой лайк фильму с id:" + id);
+        log.info("Пользователь с id:" + userId + " удалил свой лайк фильму с id:" + filmId);
         return currentFilm;
     }
 

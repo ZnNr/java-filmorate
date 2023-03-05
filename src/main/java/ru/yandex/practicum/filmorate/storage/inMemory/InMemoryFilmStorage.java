@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage;
+package ru.yandex.practicum.filmorate.storage.inMemory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,17 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
+import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorageInMemory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Component
-public class InMemoryFilmStorage implements FilmStorage {
+public class InMemoryFilmStorage implements FilmStorageInMemory {
     private static final Logger log = LoggerFactory.getLogger(FilmController.class);
     private final Map<Integer, Film> films = new HashMap<>();
     private int idGen = 1;
@@ -37,7 +37,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     //Обновляем фильм в коллекции, проверив его наличие
     @Override
     public Film updateFilm(Film film) {
-        getFilmById(film.getId());
+        getFilm(film.getId());
         films.put(film.getId(), film);
         log.info("Фильм обновлен - , {}");
         return film;
@@ -55,12 +55,12 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     //Получаем один фильм
     @Override
-    public Film getFilmById(Integer filmId) {
-        if (!films.containsKey(filmId)) {
-            log.error("Такого фильма не существует!, {}", filmId);
+    public Film getFilm(int id) {
+        if (!films.containsKey(id)) {
+            log.error("Такого фильма не существует!, {}", id);
             throw new NotFoundException("Такого фильма не существует!");
         }
-        return films.get(filmId);
+        return films.get(id);
     }
 
 

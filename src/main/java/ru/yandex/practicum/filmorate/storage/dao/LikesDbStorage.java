@@ -1,11 +1,12 @@
 package ru.yandex.practicum.filmorate.storage.dao;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.storage.interfaces.LikeStorage;
 import ru.yandex.practicum.filmorate.model.Like;
+import ru.yandex.practicum.filmorate.storage.interfaces.LikeStorage;
 
 import java.util.HashMap;
 import java.util.HashSet;

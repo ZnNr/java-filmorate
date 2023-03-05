@@ -32,6 +32,7 @@ public class FilmController {
     public Film getFilm(@PathVariable("id") @Positive int id) {
         return filmService.getFilm(id);
     }
+
     @GetMapping("/popular")
     public List<Film> getMostLikedFilms(@RequestParam(defaultValue = "10", required = false) @Positive Integer count) {
         return filmService.getMostLikedFilms(count);
@@ -58,7 +59,6 @@ public class FilmController {
                            @PathVariable("userId") @Positive Integer userId) {
         return filmService.deleteLike(filmId, userId);
     }
-
 
 
 }

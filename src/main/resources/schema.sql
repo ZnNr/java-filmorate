@@ -7,26 +7,26 @@ CREATE TABLE IF NOT EXISTS users
     birthday date CHECK (birthday <= CURRENT_DATE),
     CONSTRAINT login_is_not_empty CHECK (login <> ''),
     CONSTRAINT no_spaces_in_login CHECK (login NOT IN (' '))
-    );
+);
 
 CREATE TABLE IF NOT EXISTS genre
 (
     genre_id Integer PRIMARY KEY,
     name     varchar(30) NOT NULL
-    );
+);
 
 CREATE TABLE IF NOT EXISTS friendship
 (
     user_id   Integer REFERENCES users (user_id),
     friend_id Integer REFERENCES users (user_id),
     PRIMARY KEY (user_id, friend_id)
-    );
+);
 
 CREATE TABLE IF NOT EXISTS rating_mpa
 (
     MPA_id Integer PRIMARY KEY,
     name   varchar(10) NOT NULL
-    );
+);
 
 CREATE TABLE IF NOT EXISTS films
 (
@@ -39,18 +39,18 @@ CREATE TABLE IF NOT EXISTS films
     mpa_id       Integer REFERENCES rating_mpa (mpa_id),
     CONSTRAINT name_is_not_empty CHECK (name <> ''),
     CONSTRAINT duration_positive CHECK (duration > 0)
-    );
+);
 
 CREATE TABLE IF NOT EXISTS likes
 (
     user_id Integer REFERENCES users (user_id),
     film_id Integer REFERENCES films (film_id),
     PRIMARY KEY (user_id, film_id)
-    );
+);
 
 CREATE TABLE IF NOT EXISTS film_genre_line
 (
     film_id  Integer REFERENCES films (film_id),
     genre_id Integer REFERENCES genre (genre_id),
     PRIMARY KEY (film_id, genre_id)
-    );
+);

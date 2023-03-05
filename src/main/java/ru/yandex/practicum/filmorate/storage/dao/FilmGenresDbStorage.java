@@ -6,8 +6,8 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.storage.interfaces.FilmGenresStorage;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.interfaces.FilmGenresStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

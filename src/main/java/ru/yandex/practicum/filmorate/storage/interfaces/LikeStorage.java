@@ -1,5 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.interfaces;
+
 import java.util.HashSet;
+
 public interface LikeStorage {
 
     void addLike(int filmId, int userId);

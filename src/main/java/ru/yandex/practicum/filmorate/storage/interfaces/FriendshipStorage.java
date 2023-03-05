@@ -1,7 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.interfaces;
 
-import ru.yandex.practicum.filmorate.model.User;
-
 import java.util.HashSet;
 import java.util.List;
 public interface FriendshipStorage {

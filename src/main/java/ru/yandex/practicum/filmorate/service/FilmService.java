@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -103,8 +102,6 @@ public class FilmService {
     private int compare(Film f0, Film f1) {
         return Integer.compare(f1.getLikes().size(), f0.getLikes().size());
     }
-
-
 
 
 }

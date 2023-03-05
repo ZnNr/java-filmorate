@@ -8,14 +8,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.storage.interfaces.FilmGenresStorage;
-import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.interfaces.LikeStorage;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.GenreService;
 import ru.yandex.practicum.filmorate.service.MpaService;
-import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.FilmGenresStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.LikeStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -119,7 +118,6 @@ public class FilmDbStorage implements FilmStorage {
         values.put("mpa_id", film.getMpa().getId());
         return values;
     }
-
 
 
 }

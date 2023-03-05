@@ -32,6 +32,7 @@ public class Film {
 
     @NotNull(message = "Mpa не может быть пустым!")
     private Mpa mpa;
+
     private int rate;
 
 }

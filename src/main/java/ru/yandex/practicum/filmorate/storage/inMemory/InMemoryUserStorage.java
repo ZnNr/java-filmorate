@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.storage.interfaces.UserStorageInMemory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 @Component
@@ -28,7 +27,7 @@ public class InMemoryUserStorage implements UserStorageInMemory {
 
     //Добавляем пользователя
     @Override
-    public User createUser(User user) {
+    public User addUser(User user) {
         user.setId(idGen);
         users.put(idGen, user);
         idGen++;
@@ -38,7 +37,7 @@ public class InMemoryUserStorage implements UserStorageInMemory {
 
     //Обновляем пользователя
     @Override
-    public User updateUser(User user) {
+    public User updateNewUser(User user) {
         if (users.containsKey(user.getId())) {
             users.put(user.getId(), user);
         } else {
@@ -51,17 +50,14 @@ public class InMemoryUserStorage implements UserStorageInMemory {
 
     //Получаем список всех пользователей по запросу
     @Override
-    public List<User> getUsers() {
-        List<User> userList = new ArrayList<>();
-        for (Map.Entry<Integer, User> entry : users.entrySet()) {
-            userList.add(entry.getValue());
-        }
-        return userList;
+    public List<User> getAllUsers() {
+        log.debug("Количество пользователей всего: {}", users.size());
+        return new ArrayList<>(users.values());
     }
 
     //Получаем конкретного пользователя
     @Override
-    public User getUserById(int id) {
+    public User getUserById(Integer id) {
         if (users.containsKey(id)) {
             return users.get(id);
         } else {

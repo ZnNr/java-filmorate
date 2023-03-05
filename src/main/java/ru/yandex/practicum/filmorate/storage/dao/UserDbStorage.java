@@ -14,8 +14,8 @@ import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -28,7 +28,7 @@ public class UserDbStorage implements UserStorage {
 
 
     @Override
-    public List<User> getUsers() {
+    public Collection<User> getAllUsers() {
         String sqlQuery = "SELECT * FROM users";
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser);
     }

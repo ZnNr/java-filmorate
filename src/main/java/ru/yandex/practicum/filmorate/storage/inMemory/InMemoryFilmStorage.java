@@ -54,12 +54,12 @@ public class InMemoryFilmStorage implements FilmStorageInMemory {
 
     //Получаем один фильм
     @Override
-    public Film getFilm(int id) {
-        if (!films.containsKey(id)) {
-            log.error("Такого фильма не существует!, {}", id);
+    public Film getFilm(int filmId) {
+        if (!films.containsKey(filmId)) {
+            log.error("Такого фильма не существует!, {}", filmId);
             throw new NotFoundException("Такого фильма не существует!");
         }
-        return films.get(id);
+        return films.get(filmId);
     }
 
 

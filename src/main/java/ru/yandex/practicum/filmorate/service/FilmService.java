@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.LikeStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ public class FilmService {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final LikeStorage likeStorage;
 
 
     public Film addFilm(Film film) {
@@ -41,8 +43,8 @@ public class FilmService {
         return filmStorage.getFilms();
     }
 
-    public Film getFilm(int id) {
-        return filmStorage.getFilm(id);
+    public Film getFilm(int filmId) {
+        return filmStorage.getFilm(filmId);
     }
 
     //Проверка добавления нового фильма в соответствии с требованиями
@@ -71,24 +73,24 @@ public class FilmService {
 
     }
 
-    public Film addLike(Integer filmId, Integer userId) {
-        Film currentFilm = filmStorage.getFilm(filmId);
+
+    public void addLike(Integer filmId, Integer userId) {
+        filmStorage.getFilm(filmId);
         userStorage.getUserById(userId);
-        currentFilm.getLikes().add(userId);
+        likeStorage.addLike(filmId, userId);
         log.info("Пользователь с id:" + userId + " поставил лайк фильму с id:" + filmId);
-        return currentFilm;
     }
 
-    public Film deleteLike(Integer filmId, Integer userId) {
+    public void deleteLike(Integer filmId, Integer userId) {
         Film currentFilm = filmStorage.getFilm(filmId);
         userStorage.getUserById(userId);
         if (!currentFilm.getLikes().contains(userId)) {
             log.error("У фильма с id" + filmId + " Нет лайка от пользователя с id:" + userId);
             throw new NotFoundException("У фильма нет лайка от этого пользователя");
         }
-        currentFilm.getLikes().remove(userId);
+        likeStorage.deleteLike(filmId, userId);
         log.info("Пользователь с id:" + userId + " удалил свой лайк фильму с id:" + filmId);
-        return currentFilm;
+
     }
 
     //Получаем коллекцию самых популярных фильмов
@@ -98,6 +100,7 @@ public class FilmService {
                 .limit(count)
                 .collect(Collectors.toList());
     }
+
 
     private int compare(Film f0, Film f1) {
         return Integer.compare(f1.getLikes().size(), f0.getLikes().size());

@@ -9,13 +9,13 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.storage.interfaces.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.dao.UserDbStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -103,7 +103,7 @@ class FilmorateApplicationTests {
 
     @Test
     void getUsersByEmptyTest() {
-        Collection<User> users = userStorage.getUsers();
+        Collection<User> users = userStorage.getAllUsers();
         assertThat("Список пользователей не пуст", users, empty());
     }
 
@@ -123,9 +123,9 @@ class FilmorateApplicationTests {
                 .build();
         User addUser1 = userStorage.createUser(user1);
         User addUser2 = userStorage.createUser(user2);
-        assertThat("Список пользователей пуст", userStorage.getUsers(), hasSize(2));
-        assertThat("User1 не найден", userStorage.getUsers(), hasItem(addUser1));
-        assertThat("User2 не найден", userStorage.getUsers(), hasItem(addUser2));
+        assertThat("Список пользователей пуст", userStorage.getAllUsers(), hasSize(2));
+        assertThat("User1 не найден", userStorage.getAllUsers(), hasItem(addUser1));
+        assertThat("User2 не найден", userStorage.getAllUsers(), hasItem(addUser2));
     }
 
     @Test
@@ -434,7 +434,7 @@ class FilmorateApplicationTests {
         likesStorage.addLike(addFilm1.getId(), addUser1.getId());
         assertThat(String.format("Список лайков %s пуст", addFilm1.getName()),
                 filmStorage.getFilm(addFilm1.getId()).getLikes(), hasItem(addUser1.getId()));
-        likesStorage.removeLike(addFilm1.getId(), addUser1.getId());
+        likesStorage.deleteLike(addFilm1.getId(), addUser1.getId());
         assertThat(String.format("Список лайков %s не пуст", addFilm1.getName()),
                 filmStorage.getFilm(addFilm1.getId()).getLikes(), empty());
     }

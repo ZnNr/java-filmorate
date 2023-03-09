@@ -1,47 +1,48 @@
 package ru.yandex.practicum.filmorate.storage.dao;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.interfaces.MpaStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-
-@Component
-@RequiredArgsConstructor
-@Slf4j
-public class MpaDbStorage implements MpaStorage {
+import java.util.List;
+@Repository("MpaDbStorage")
+public class MpaDbStorage implements MpaStorage{
     private final JdbcTemplate jdbcTemplate;
 
-    @Override
-    public Collection<Mpa> getMpa() {
-        String sqlQuery = "SELECT * FROM rating_mpa";
-        return jdbcTemplate.query(sqlQuery, this::mapRowToMpa);
+    @Autowired
+    public MpaDbStorage(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public Mpa getMpaById(int mpaId) {
+    public List<Mpa> getMpasList() {
+        String sqlQuery = "SELECT * FROM mpa";
+        return jdbcTemplate.query(sqlQuery, this::makeMpa);
+    }
+
+    @Override
+    public Mpa getMpa(Integer id) throws ResponseStatusException {
         Mpa mpa;
-        String sqlQuery = "SELECT * FROM rating_mpa WHERE mpa_id = ?";
+        String sqlQuery = "SELECT * FROM mpa WHERE mpa_id = ?";
         try {
-            mpa = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToMpa, mpaId);
-        } catch (DataAccessException e) {
-            throw new NotFoundException(String.format("MPA c таким id %s не найден", mpaId));
+            mpa = jdbcTemplate.queryForObject(sqlQuery, this::makeMpa, id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Рейтинга с id=" + id + " нет");
         }
         return mpa;
     }
 
-    private Mpa mapRowToMpa(ResultSet resultSet, int rowNum) throws SQLException {
+    private Mpa makeMpa(ResultSet resultSet, int rowNum) throws SQLException {
         return Mpa.builder()
                 .id(resultSet.getInt("mpa_id"))
-                .name(resultSet.getString("name"))
+                .name(resultSet.getString("mpa_name"))
                 .build();
     }
 }
-

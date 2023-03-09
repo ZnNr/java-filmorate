@@ -1,47 +1,49 @@
 package ru.yandex.practicum.filmorate.storage.dao;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.interfaces.GenreStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
+import java.util.List;
 
-@Component
-@RequiredArgsConstructor
-@Slf4j
+@Repository("GenreDbStorage")
 public class GenreDbStorage implements GenreStorage {
     private final JdbcTemplate jdbcTemplate;
 
-    @Override
-    public Collection<Genre> getGenres() {
-        String sqlQuery = "SELECT * FROM genre";
-        return jdbcTemplate.query(sqlQuery, this::mapRowToGenre);
+    @Autowired
+    public GenreDbStorage(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public Genre getGenreById(int genreId) {
+    public List<Genre> getGenresList() {
+        String sqlQuery = "SELECT * FROM genre";
+        return jdbcTemplate.query(sqlQuery, this::makeGenre);
+    }
+
+    @Override
+    public Genre getGenre(Integer id) throws ResponseStatusException {
         Genre genre;
         String sqlQuery = "SELECT * FROM genre WHERE genre_id = ?";
         try {
-            genre = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToGenre, genreId);
-        } catch (DataAccessException e) {
-            throw new NotFoundException(String.format("Жанр с таким id %s не найден", genreId));
+            genre = jdbcTemplate.queryForObject(sqlQuery, this::makeGenre, id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Жанра с id=" + id + " нет");
         }
         return genre;
     }
 
-    private Genre mapRowToGenre(ResultSet resultSet, int rowNum) throws SQLException {
+    private Genre makeGenre(ResultSet resultSet, int rowNum) throws SQLException {
         return Genre.builder()
                 .id(resultSet.getInt("genre_id"))
-                .name(resultSet.getString("name"))
+                .name(resultSet.getString("genre_name"))
                 .build();
     }
-
 }

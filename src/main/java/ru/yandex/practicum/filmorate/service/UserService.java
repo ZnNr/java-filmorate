@@ -1,117 +1,98 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.interfaces.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
-import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class UserService {
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
+    private final UserStorage users;
 
-    private final UserStorage userStorage;
-    private final FriendshipStorage friendshipStorage;
-    private int idGen = 1;
-
-
-    public User createUser(User user) {
-        validate(user);
-        user.setId(idGen);
-        userStorage.createUser(user);
-        idGen++;
-        log.info("Добавлен пользователь: " + user);
-        return user;
+    @Autowired
+    public UserService(@Qualifier("UserDbStorage") UserStorage users) {
+        this.users = users;
     }
 
-    public User updateUser(User user) {
-        User beforeUser = userStorage.getUserById(user.getId());
-        validate(user);
-        userStorage.updateUser(user);
-        log.info("Данные пользователя: " + beforeUser + " Обновлены на: " + user);
-        return user;
-    }
-
-    public Collection<User> getAllUsers() {
-        return userStorage.getAllUsers();
-    }
-
-    public User getUserById(int userId) {
-        return userStorage.getUserById(userId);
-    }
-
-    public void addFriend(int userId, int friendId) {
-        userStorage.getUserById(userId);
-        userStorage.getUserById(friendId);
-        friendshipStorage.addAsFriend(userId, friendId);
-        log.info("Пользователи с ID {} и {} теперь друзья", userId, friendId);
-    }
-
-    public void deleteFriend(int userId, int friendId) {
-        userStorage.getUserById(userId);
-        userStorage.getUserById(friendId);
-        friendshipValidate(userId, friendId);
-        friendshipStorage.deleteFromFriends(userId, friendId);
-        log.info("Пользователи с ID {} и {} больше не друзья", userId, friendId);
-    }
-
-    private void friendshipValidate(int userId, int friendId) {
-        if (!userStorage.getUserById(userId).getFriends().contains(friendId)) {
-            log.error("Пользователи с id:" + userId + " и id:" + friendId + " - не друзья");
-            throw new ValidationException("Этого пользователя уже нет в друзьях");
-        }
-    }
-
-    public List<User> getFriends(int userId) {
-        userStorage.getUserById(userId);
-        List<User> friends = friendshipStorage.getListOfFriends(userId).stream()
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
-        log.debug("Количество друзей пользователя c id:" + userId + " = " + friendshipStorage
-                .getListOfFriends(userId).stream()
-                .map(userStorage::getUserById).count());
-        return friends;
-    }
-
-
-    public List<User> findCommonFriends(int id, int otherId) {
-        userStorage.getUserById(id);
-        userStorage.getUserById(otherId);
-        List<User> commonFriends = friendshipStorage.getAListOfCommonFriends(id, otherId).stream()
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
-        log.debug("Число общих друзей у пользователей с id:" + id + " и id:" + otherId + " = " + commonFriends.size());
-        return commonFriends;
-    }
-
-
-    private void validate(User user) {
-        if ((user.getEmail() == null || user.getEmail().isBlank()) || !user.getEmail().contains("@")) {
-            log.warn("Валидация не пройдена: email либо пустой, либо не содержит @.");
-            throw new ValidationException("Адрес электронной почты не может быть пустым и должен содержать символ @.");
-        }
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            log.warn("Валидация не пройдена: логин либо пустой, либо содержит пробелы.");
-            throw new ValidationException("Логин не должен быть пустым и не должен содержать пробелы.");
-        }
+    public User addUser(User user) throws ResponseStatusException {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
+            log.debug("Имя пользователя пустое. Был использован логин");
         }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("Валидация не пройдена: дата рождения в будущем.");
-            throw new ValidationException("Дата рождения не может быть в будущем.");
-        }
+        users.add(user);
+        log.info("Пользователь {} сохранен", user);
+        return user;
     }
 
+    public User updateUser(User user) throws ResponseStatusException {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.debug("Имя пользователя пустое. Был использован логин");
+        }
+        users.update(user);
+        log.info("Пользователь {} сохранен", user);
+        return user;
+    }
 
+    public List<User> getUsers() {
+        log.info("Текущее кол-во пользователей: " + users.getUsersList().size());
+        return users.getUsersList();
+    }
+
+    public void addFriend(Integer userId, Integer friendId) throws ResponseStatusException {
+        if (userId <=0 || friendId <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "id и friendId не могут быть отрицательныи либо равены 0");
+        }
+        users.addFriend(userId, friendId);
+        log.info("Пользователь с id=" + userId + " добавил в друзья пользователя с id= " + friendId);
+    }
+
+    public void deleteFriend(Integer userId, Integer friendId) throws ResponseStatusException {
+        if (userId <=0 || friendId <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "id и friendId не могут быть отрицательныи либо равены 0");
+        }
+        if (userId.equals(friendId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Невозможно удалить из друзей самого себя");
+        }
+        users.deleteFriend(userId, friendId);
+        log.info("Пользователь с id=" + userId + " удалил пользователя с id=" + friendId);
+    }
+
+    public List<User> getCommonFriends(Integer userId, Integer friendId) throws ResponseStatusException {
+        if (userId <=0 || friendId <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "id и friendId не могут быть отрицательныи либо равены 0");
+        }
+        if (userId.equals(friendId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Невозможно запросить общих друзей самого себя");
+        }
+        return  users.getCommonFriends(userId, friendId);
+    }
+
+    public List<User> getFriends(Integer friendId) throws ResponseStatusException {
+
+        if (friendId <=0 ) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "id не может быть отрицательным либо равен 0");
+        }
+
+        return users.getFriends(friendId);
+    }
+
+    public User getUser(Integer userId) {
+        if (userId <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "id не может быть отрицательным либо равен 0");
+        }
+        return users.getUser(userId);
+    }
 }

@@ -1,20 +1,17 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.PastOrPresent;
-import javax.validation.constraints.PositiveOrZero;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.*;
 
 @Data
 @Builder
 public class User {
     @PositiveOrZero(message = "id пользователя не может быть отрицательным числом")
-    private int id;
+    @EqualsAndHashCode.Exclude
+    private Integer id;
     @Email(message = "Проверьте правильность заполнения адреса почты")
     @NotBlank
     private String email;
@@ -23,6 +20,15 @@ public class User {
     private String name;
     @PastOrPresent(message = "День рождения не может быть в будущем")
     private LocalDate birthday;
-    private HashSet<Integer> friends;
+    private final Set<User> friends = new HashSet<>();
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("email", email);
+        values.put("login", login);
+        values.put("name", name);
+        values.put("birthday", birthday);
+        return values;
+    }
 
 }

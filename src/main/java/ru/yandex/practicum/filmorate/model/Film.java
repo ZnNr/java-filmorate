@@ -1,38 +1,44 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
-import lombok.Builder;
-import lombok.Data;
+
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-
+import java.util.*;
 
 @Data
 @Builder
 public class Film {
-    private final HashSet<Integer> likes;
-    private final List<Genre> genres;
+    @EqualsAndHashCode.Exclude
     @PositiveOrZero(message = "id фильма не может быть отрицательным числом!")
-    private int id;
-
+    private Integer id;
     @NotBlank(message = "Название не может быть пустым")
     private String name;
-
     @Size(max = 200, message = "Максимальная длина описания - 200 символов")
     private String description;
-
-    @NotNull
+    @PastOrPresent(message = "Некорректная дата релиза")
     private LocalDate releaseDate;
-
     @Positive(message = "Продолжительность фильма должна быть положительной")
-    private int duration;
-
-    @NotNull(message = "Mpa не может быть пустым!")
+    private Integer duration;
+    @EqualsAndHashCode.Exclude
+    private final Set<User> likes = new HashSet<>();
+    @EqualsAndHashCode.Exclude
+    private final Set<Genre> genres = new TreeSet<>();
+    @EqualsAndHashCode.Exclude
+    @NotNull
     private Mpa mpa;
 
-    private int rate;
-
+    public Map<String, Object> toMap() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("name", name);
+        values.put("description", description);
+        values.put("release_date", releaseDate);
+        values.put("duration", duration);
+        values.put("mpa", mpa.getId());
+        return values;
+    }
 }

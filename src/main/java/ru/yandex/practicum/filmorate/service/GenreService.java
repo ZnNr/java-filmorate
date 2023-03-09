@@ -1,33 +1,26 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.interfaces.FilmGenresStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.GenreStorage;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class GenreService {
-    private final GenreStorage genreStorage;
-    private final FilmGenresStorage filmGenresStorage;
+    private final GenreStorage genres;
 
-    public Collection<Genre> getGenres() {
-        return genreStorage.getGenres();
+    @Autowired
+    public GenreService(GenreStorage genres) {
+        this.genres = genres;
     }
 
-    public Genre getGenreById(int id) {
-        return genreStorage.getGenreById(id);
+    public Genre getGenre(Integer id) {
+        return genres.getGenre(id);
     }
 
-    public List<Genre> getListOfGenres(int id) {
-
-        return filmGenresStorage.getListOfGenres(id).stream()
-                .map(genreStorage::getGenreById)
-                .collect(Collectors.toList());
+    public List<Genre> getGenreList() {
+        return genres.getGenresList();
     }
 }

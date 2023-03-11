@@ -9,15 +9,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
+
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Repository("FilmDbStorage")
 @Slf4j
@@ -51,18 +52,20 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film update (Film film) {
+        String SQL_DELETE_FROM_GENRE_FILMS = "DELETE FROM genre_films WHERE film_id = ?";
+
         String sqlQuery = "UPDATE film " +
                 "SET name = ?, description = ?, release_date = ?, duration = ?, mpa = ? WHERE film_id = ?";
         if (jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate()
                 , film.getDuration(), film.getMpa().getId(), film.getId()) == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильма с id=" + film.getId() + " нет");
+            throw new NotFoundException("Фильма с id=" + film.getId() + " нет");
         }
         if (film.getGenres().size() == 0) {
-            String sqlQuery2 = "DELETE FROM genre_films WHERE film_id = ?";
+            String sqlQuery2 = SQL_DELETE_FROM_GENRE_FILMS;
             jdbcTemplate.update(sqlQuery2, film.getId());
         }
         if (film.getGenres() != null && film.getGenres().size() != 0) {
-            String sqlQuery2 = "DELETE FROM genre_films WHERE film_id = ?";
+            String sqlQuery2 = SQL_DELETE_FROM_GENRE_FILMS;
             jdbcTemplate.update(sqlQuery2, film.getId());
             String sqlQuery3 = "INSERT INTO genre_films (film_id, genre_id) VALUES (?, ?)";
             film.getGenres().forEach(genre -> jdbcTemplate.update(sqlQuery3, film.getId(), genre.getId()));
@@ -85,7 +88,7 @@ public class FilmDbStorage implements FilmStorage {
         try {
             film = jdbcTemplate.queryForObject(sqlQuery, this::makeFilm, id);
         } catch (EmptyResultDataAccessException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильма с id=" + id + " нет");
+            throw new NotFoundException("Фильма с id=" + id + " нет");
         }
         return film;
     }
@@ -117,17 +120,16 @@ public class FilmDbStorage implements FilmStorage {
         if (!dbContainsUser(userId)) {
             String message = "Ошибка запроса удаления лайка" +
                     " Невозможно удалить лайк от пользователя с id= " + userId + " которого не существует.";
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
+            throw new NotFoundException(message);
         }
         if (!dbContainsFilm(filmId)) {
             String message = "Ошибка запроса удаления лайка" +
                     " Невозможно удалить лайк с фильма с id= " + filmId + " которого не существует.";
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
+            throw new NotFoundException(message);
         }
         String sqlQuery = "DELETE FROM likes where person_id = ? AND film_id = ?";
         if (jdbcTemplate.update(sqlQuery, userId, filmId) == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Лайка от пользователя с id=" + userId + " у фильма с id=" + filmId + " нет");
+            throw new NotFoundException("Лайка от пользователя с id=" + userId + " у фильма с id=" + filmId + " нет");
         }
     }
 

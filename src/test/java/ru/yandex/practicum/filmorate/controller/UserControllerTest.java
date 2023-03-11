@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.controller;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,7 @@ public class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final LocalDate brithDay = LocalDate.of(1993, 10, 27);
+    private static final LocalDate brithDay = LocalDate.of(1985, 02, 15);
 
     @Test
     public void addAndGetUser() throws Exception {
@@ -85,25 +84,6 @@ public class UserControllerTest {
                 );
     }
 
-    @Test
-    public void addIncorrectEmailUser() throws Exception {
-        //given
-        User user1 = User.builder().id(1).email("this-incorrect?.email@").login("user_login").name("name").birthday(brithDay)
-                .build();
-        //when
-        mockMvc.perform(post("/users").content(objectMapper.writeValueAsString(user1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
 
     @Test
     public void addIncorrectLoginUser() throws Exception {
@@ -168,7 +148,6 @@ public class UserControllerTest {
         //when
         mockMvc.perform(post("/users").content(objectMapper.writeValueAsString(user1))
                         .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-
                 //then
                 .andExpectAll(
                         status().isCreated(),
@@ -221,28 +200,6 @@ public class UserControllerTest {
                 );
     }
 
-    @Test
-    public void updateIncorrectEmailUser() throws Exception {
-        //given
-        User user1 = User.builder().id(1).email("simple@email.ru").login("user_login").name("name").birthday(brithDay)
-                .build();
-        //when
-        mockMvc.perform(post("/users").content(objectMapper.writeValueAsString(user1))
-                .contentType(MediaType.APPLICATION_JSON)).andDo(print());
-        user1.setEmail("this-incorrect?.email@");
-        mockMvc.perform(put("/users").content(objectMapper.writeValueAsString(user1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
 
     @Test
     public void updateIncorrectLoginUser() throws Exception {

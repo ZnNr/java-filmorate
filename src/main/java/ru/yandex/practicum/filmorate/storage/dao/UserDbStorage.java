@@ -10,9 +10,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
-
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -21,6 +22,10 @@ import java.util.List;
 @Slf4j
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
+
+     String SQL_INSERT_INTO_FRIEND_REQUEST = "INSERT INTO friend_request (sender_id, addressee_id) VALUES (?, ?)";
+
+    String SQL_SELECT_ALL_FROM_PERSON = "SELECT * FROM person";
 
     @Autowired
     public UserDbStorage(JdbcTemplate jdbcTemplate) {
@@ -31,11 +36,11 @@ public class UserDbStorage implements UserStorage {
     public void add(User user) {
         if (dbContainsUser(user)) {
             log.warn("Такой пользователь уже есть");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Такой пользователь уже есть");
+            throw new ValidationException("Такой пользователь уже есть");
         }
         Integer userId = addUserInfo(user);
         user.setId(userId);
-        String sqlQuery = "INSERT INTO friend_request (sender_id, addressee_id) VALUES (?, ?)";
+        String sqlQuery = SQL_INSERT_INTO_FRIEND_REQUEST;
         user.getFriends().stream().map(friend -> jdbcTemplate.update(sqlQuery, userId, friend));
     }
 
@@ -47,13 +52,21 @@ public class UserDbStorage implements UserStorage {
                 "SET email = ?, login = ?, name = ?, birthday = ? WHERE person_id = ?";
         if (jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName()
                 , user.getBirthday(), user.getId()) == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователя с id=" + user.getId() + " нет");
+            throw new NotFoundException("Пользователя с id=" + user.getId() + " нет");
         }
     }
 
+    private int addUserInfo(User user) {
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("person")
+                .usingGeneratedKeyColumns("person_id");
+        return simpleJdbcInsert.executeAndReturnKey(user.toMap()).intValue();
+    }
+
+
     @Override
     public List<User> getUsersList() {
-        String sqlQuery = "SELECT * FROM person";
+        String sqlQuery = SQL_SELECT_ALL_FROM_PERSON;
         return jdbcTemplate.query(sqlQuery, this::makeUser);
     }
 
@@ -62,14 +75,14 @@ public class UserDbStorage implements UserStorage {
         if (!dbContainsUser(userId)) {
             String message = "Ошибка добавления в друзья!" +
                     " Невозможно добавиться в друзья к пользователю с несуществующим id= " + userId;
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
+            throw new NotFoundException(message);
         }
         if (!dbContainsUser(friendId)) {
             String message = "Ошибка добавления в друзья!" +
                     " Невозможно добавить в друзья несуществующего пользователя с id=" + friendId;
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
+            throw new NotFoundException(message);
         }
-        String sqlQuery = "INSERT INTO friend_request (sender_id, addressee_id) VALUES (?, ?)";
+        String sqlQuery = SQL_INSERT_INTO_FRIEND_REQUEST;
         try {
             jdbcTemplate.update(sqlQuery, userId, friendId);
         } catch (DuplicateKeyException e) {
@@ -114,9 +127,8 @@ public class UserDbStorage implements UserStorage {
                     " Невозможно получить список друзей несуществующего пользователя с id=" + friendId;
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
         }
-        String sqlQuery = "SELECT * " +
-                "FROM person " +
-                "WHERE person_id IN " +
+        String sqlQuery = SQL_SELECT_ALL_FROM_PERSON +
+                " WHERE person_id IN " +
                 "(SELECT * FROM (SELECT  addressee_id " +
                 "FROM FRIEND_REQUEST " +
                 "WHERE sender_id = ? OR sender_id = ? )  GROUP BY addressee_id HAVING COUNT(addressee_id) > 1)";
@@ -130,8 +142,8 @@ public class UserDbStorage implements UserStorage {
                     " Невозможно получить список друзей несуществующего пользователя с id=" + friendId;
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, message);
         }
-        String sqlQuery = "SELECT * FROM person " +
-                "WHERE person_id IN (SELECT addressee_id FROM friend_request WHERE sender_id = ?)";
+        String sqlQuery = SQL_SELECT_ALL_FROM_PERSON +
+                " WHERE person_id IN (SELECT addressee_id FROM friend_request WHERE sender_id = ?)";
         return jdbcTemplate.query(sqlQuery, this::makeFriendUser, friendId);
     }
 
@@ -140,16 +152,11 @@ public class UserDbStorage implements UserStorage {
         if (!dbContainsUser(userId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователя с id= " + userId + " не существует");
         }
-        String sqlQuery = "SELECT * FROM person WHERE person_id = ?";
+        String sqlQuery = SQL_SELECT_ALL_FROM_PERSON + " WHERE person_id = ?";
         return jdbcTemplate.queryForObject(sqlQuery, this::makeUser, userId);
     }
 
-    private int addUserInfo(User user) {
-        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("person")
-                .usingGeneratedKeyColumns("person_id");
-        return simpleJdbcInsert.executeAndReturnKey(user.toMap()).intValue();
-    }
+
 
     private User makeUser(ResultSet resultSet, int rowNum) throws SQLException {
         User user = User.builder()
@@ -159,7 +166,7 @@ public class UserDbStorage implements UserStorage {
                 .name(resultSet.getString("name"))
                 .birthday(resultSet.getDate("birthday").toLocalDate())
                 .build();
-        String sqlQuery = "SELECT * FROM person WHERE person_id IN (SELECT addressee_id  FROM friend_request WHERE sender_id = ?)";
+        String sqlQuery = SQL_SELECT_ALL_FROM_PERSON + " WHERE person_id IN (SELECT addressee_id  FROM friend_request WHERE sender_id = ?)";
         user.getFriends().addAll(jdbcTemplate.query(sqlQuery, this::makeFriendUser, user.getId()));
         return user;
     }
@@ -175,7 +182,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     private boolean dbContainsUser(User user) {
-        String sqlQuery = "SELECT * FROM person WHERE email = ? AND login = ? AND name = ? AND birthday = ?";
+        String sqlQuery = SQL_SELECT_ALL_FROM_PERSON +" WHERE email = ? AND login = ? AND name = ? AND birthday = ?";
         try {
             jdbcTemplate.queryForObject(sqlQuery, this::makeUser, user.getEmail(), user.getLogin(),
                     user.getName(), user.getBirthday());
@@ -186,7 +193,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     private boolean dbContainsUser(Integer userId) {
-        String sqlQuery = "SELECT * FROM person WHERE person_id = ?";
+        String sqlQuery = SQL_SELECT_ALL_FROM_PERSON + " WHERE person_id = ?";
         try {
             jdbcTemplate.queryForObject(sqlQuery, this::makeUser, userId);
             return true;

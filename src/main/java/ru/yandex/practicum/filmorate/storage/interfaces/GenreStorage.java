@@ -1,10 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.interfaces;
 
-import ru.yandex.practicum.filmorate.model.Genre;
-
-import java.util.Collection;
-
-import java.util.List;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.util.List;
 

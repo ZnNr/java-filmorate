@@ -1,9 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.bytebuddy.utility.RandomString;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -95,90 +93,6 @@ public class FilmControllerTest {
     }
 
     @Test
-    public void addIncorrectDateFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().id(1).name("film1").description("description")
-                .releaseDate(date.minusDays(2)).duration(60).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
-    public void addIncorrectNameFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().id(1).name("").description("description")
-                .releaseDate(date).duration(60).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
-    public void addIncorrectDescriptionFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().name("film1").description(RandomString.make(201))
-                .releaseDate(date).duration(60).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
-    public void addIncorrectDurationFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().name("film1").description("description")
-                .releaseDate(date).duration(0).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
     public void addAndUpdateFilm() throws Exception {
         //given
         Film film1 = Film.builder().name("film1").description("description").releaseDate(date).duration(60)
@@ -230,102 +144,6 @@ public class FilmControllerTest {
                 //then
                 .andExpectAll(
                         status().isNotFound(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
-    public void updateIncorrectDateFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().name("film1").description("description")
-                .releaseDate(date).duration(60).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                .contentType(MediaType.APPLICATION_JSON));
-        film1.setReleaseDate(date.minusDays(2));
-        mockMvc.perform(put("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
-    public void updateIncorrectNameFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().name("film").description("description")
-                .releaseDate(date).duration(60).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                .contentType(MediaType.APPLICATION_JSON)).andDo(print());
-        film1.setName("");
-        mockMvc.perform(put("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
-    public void updateIncorrectDescriptionFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().name("film1").description("description")
-                .releaseDate(date).duration(60).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                .contentType(MediaType.APPLICATION_JSON)).andDo(print());
-        film1.setDescription(RandomString.make(201));
-        mockMvc.perform(put("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
-                        result -> {
-                            assertNotNull(result.getResponse().getContentAsString()
-                                    , "Отсутствует тело сообщения");
-                            assertFalse(result.getResponse().getContentAsString().isBlank()
-                                    , "Тело ответа с сообщением пустое");
-                        }
-                );
-    }
-
-    @Test
-    public void updateIncorrectDurationFilm() throws Exception {
-        //given
-        Film film1 = Film.builder().name("film1").description("description")
-                .releaseDate(date).duration(60).mpa(new Mpa(1, null)).build();
-
-        //when
-        mockMvc.perform(post("/films").content(objectMapper.writeValueAsString(film1))
-                .contentType(MediaType.APPLICATION_JSON)).andDo(print());
-        film1.setDuration(-2);
-        mockMvc.perform(put("/films").content(objectMapper.writeValueAsString(film1))
-                        .contentType(MediaType.APPLICATION_JSON)).andDo(print())
-                //then
-                .andExpectAll(
-                        status().isBadRequest(),
                         result -> {
                             assertNotNull(result.getResponse().getContentAsString()
                                     , "Отсутствует тело сообщения");

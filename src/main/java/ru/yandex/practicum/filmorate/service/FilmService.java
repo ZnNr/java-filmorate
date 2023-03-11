@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
 
+import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,8 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FilmService {
     private final FilmStorage films;
-
-    private static final LocalDate minDate = LocalDate.parse("1895-12-28");
+    private final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
     @Autowired
 
@@ -28,21 +28,15 @@ public class FilmService {
         this.films = films;
     }
 
-    public Film addFilm(Film film) throws ResponseStatusException {
-        if (film.getReleaseDate().isBefore(minDate)) {
-            log.warn("Дата релиза не может быть раньше 28.12.1895\nТекущая дата релиза: " + film.getReleaseDate());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Дата релиза не может быть раньше 28.12.1895");
-        }
+    public Film addFilm(Film film) {
+        validate(film);
         films.add(film);
         log.info("Фильм {} сохранен", film);
         return film;
     }
 
-    public Film updateFilm(Film film) throws ResponseStatusException {
-        if (film.getReleaseDate().isBefore(minDate)) {
-            log.warn("Дата релиза не может быть раньше 28.12.1895\nТекущая дата релиза: " + film.getReleaseDate());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Дата релиза не может быть раньше 28.12.1895");
-        }
+    public Film updateFilm(Film film) {
+        validate(film);
         log.info("Фильм {} обновлен", film);
         return films.update(film);
     }
@@ -53,7 +47,7 @@ public class FilmService {
     }
 
     public void addLike(Integer userId, Integer filmId) throws ResponseStatusException {
-        if (userId <= 0 || filmId <= 0) {
+        if (userId <=0 || filmId <= 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "id и filmId не могут быть отрицательныи либо равены 0");
         }
@@ -62,7 +56,7 @@ public class FilmService {
     }
 
     public void deleteLike(Integer userId, Integer filmId) throws ResponseStatusException {
-        if (userId <= 0 || filmId <= 0) {
+        if (userId <=0 || filmId <= 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "id и filmId не могут быть отрицательныи либо равены 0");
         }
@@ -92,4 +86,26 @@ public class FilmService {
         }
         return films.getFilm(filmId);
     }
+
+    private void validate(Film film) {
+        if (film.getName() == null || film.getName().isBlank()) {
+            log.warn("Валидация не пройдена: отсутствует название фильма.");
+            throw new ValidationException("Название не может быть пустым.");
+        }
+        if (film.getDescription().length() > 200) {
+            log.warn("Валидация не пройдена: описание превышает 200 символов.");
+            throw new ValidationException("Описание превышает 200 символов.");
+        }
+        if (film.getDuration() < 0) {
+            log.warn("Валидация не пройдена: отрицательная продолжительность фильма.");
+            throw new ValidationException("Продолжительность фильма не может быть отрицательным.");
+        }
+
+        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
+            log.warn("Валидация не пройдена: дата релиза раньше {}", MIN_RELEASE_DATE);
+            throw new ValidationException("Дата релиза фильма должна быть после " + MIN_RELEASE_DATE);
+        }
+
+    }
+
 }

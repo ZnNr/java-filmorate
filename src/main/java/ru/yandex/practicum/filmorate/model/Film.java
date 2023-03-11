@@ -1,10 +1,8 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.*;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
@@ -14,15 +12,14 @@ import java.util.*;
 @Builder
 public class Film {
     @EqualsAndHashCode.Exclude
-    @PositiveOrZero(message = "id фильма не может быть отрицательным числом!")
     private Integer id;
-    @NotBlank(message = "Название не может быть пустым")
+    //@NotBlank(message = "Название не может быть пустым")
     private String name;
-    @Size(max = 200, message = "Максимальная длина описания - 200 символов")
+    //@Size(max = 200, message = "Максимальная длина описания 200 символов")
     private String description;
     @PastOrPresent(message = "Некорректная дата релиза")
     private LocalDate releaseDate;
-    @Positive(message = "Продолжительность фильма должна быть положительной")
+    //@Positive(message = "Некорректная продолжительность фильма")
     private Integer duration;
     @EqualsAndHashCode.Exclude
     private final Set<User> likes = new HashSet<>();

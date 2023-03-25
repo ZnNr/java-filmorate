@@ -1,28 +1,29 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.service.GenreService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.dao.GenreDao;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/genres")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class GenreController {
-    private final GenreService genreService;
+
+    private final GenreDao genreDao;
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<Genre> getFilms() {
-        return genreService.getGenreList();
+    public List<Genre> getAllGenre() {
+        return genreDao.getAllGenre();
     }
 
-    @GetMapping("{id}")
-    public Genre getFilm(@PathVariable("id") Integer id) {
-        return genreService.getGenre(id);
+    @GetMapping("/{id}")
+    public Genre getGenreById(@PathVariable Integer id) {
+        return genreDao.getGenreById(id);
     }
 }

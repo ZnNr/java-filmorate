@@ -1,28 +1,30 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.service.MpaService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.dao.impl.MpaRatingImpl;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/mpa")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class MpaController {
-    private final MpaService mpaService;
+
+    private final MpaRatingImpl mpa;
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<Mpa> getMpasList() {
-        return mpaService.getMpasList();
+    public List<Mpa> getAllMpa() {
+        return mpa.getAllMpa();
     }
 
-    @GetMapping("{id}")
-    public Mpa getMpa(@PathVariable("id") Integer id) {
-        return mpaService.getMpa(id);
+    @GetMapping("/{id}")
+    public Mpa getMpaById(@PathVariable Integer id) {
+        return mpa.getMpaById(id);
     }
 }
+

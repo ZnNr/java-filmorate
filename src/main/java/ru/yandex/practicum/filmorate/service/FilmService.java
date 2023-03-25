@@ -1,111 +1,153 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.dao.LikesDao;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.utility.constants.EventType;
+import ru.yandex.practicum.filmorate.utility.constants.Operation;
 
-import javax.validation.ValidationException;
-import java.time.LocalDate;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 @Service
-@Slf4j
 public class FilmService {
-    private final FilmStorage films;
-    private final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
-    @Autowired
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
+    private final LikesDao likesDao;
+    private final EventService eventService;
 
-    public FilmService(@Qualifier("FilmDbStorage") FilmStorage films) {
-        this.films = films;
+    public FilmService(
+            @Qualifier("filmDbStorage") FilmStorage filmStorage,
+            @Qualifier("userDbStorage") UserStorage userStorage,
+            LikesDao likesDao, EventService eventService) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+        this.likesDao = likesDao;
+        this.eventService = eventService;
     }
 
+
+    /**
+     * Метод по добавлению фильма
+     * @param film фильм который необходимо создать {@link FilmStorage#addFilm(Film)}
+     * @return Возвращает фильм
+     */
     public Film addFilm(Film film) {
-        validate(film);
-        films.add(film);
-        log.info("Фильм {} сохранен", film);
-        return film;
+        if (film.getGenres() != null && film.getGenres().size() > 1) {
+            film.setGenres(film.getGenres()
+                    .stream()
+                    .sorted(Comparator.comparing(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new)));
+        }
+        return filmStorage.addFilm(film);
     }
 
+    /**
+     * Метод по модифицированию фильма {@link FilmStorage#updateFilm(Film)}
+     * @param film фильм, который необходимо изменить
+     * @return Возвращает измененный фильм
+     */
     public Film updateFilm(Film film) {
-        validate(film);
-        log.info("Фильм {} обновлен", film);
-        return films.update(film);
+        if (film.getGenres() != null && film.getGenres().size() > 1) {
+            film.setGenres(film.getGenres()
+                    .stream()
+                    .sorted(Comparator.comparing(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new)));
+        }
+
+
+        return filmStorage.updateFilm(film);
     }
 
-    public List<Film> getFilms() {
-        log.info("Текущее кол-во фильмов: " + films.getFilmsList().size());
-        return films.getFilmsList();
+    /**
+     * Метод позволяющий пользователем ставить лайки фильмам.
+     * @param id фильм, которому ставиться лайк.
+     * @param userId пользователь, который ставит лайк.
+     */
+    public void putLike(Long id, Long userId) {
+        userStorage.findUserById(userId);
+        filmStorage.findFilmById(id);
+
+        likesDao.putLike(id, userId);
+        eventService.addEvent(new Event(Instant.now().toEpochMilli(), userId, EventType.LIKE, Operation.ADD, id));
     }
 
-    public void addLike(Integer userId, Integer filmId) throws ResponseStatusException {
-        if (userId <=0 || filmId <= 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "id и filmId не могут быть отрицательныи либо равены 0");
-        }
-        films.addLike(userId, filmId);
-        log.info("Пользователь c id = " + userId + " поставил лайк фильму c id = " + filmId);
+    /**
+     * Метод по удалению лайка фильму пользователем.
+     * @param id идентификатор фильма.
+     * @param userId идентификатор пользователя.
+     */
+    public void deleteLike(Long id, Long userId) {
+        userStorage.findUserById(userId);
+        filmStorage.findFilmById(id);
+
+        likesDao.removeLike(id, userId);
+        eventService.addEvent(new Event(Instant.now().toEpochMilli(), userId, EventType.LIKE, Operation.REMOVE, id));
     }
 
-    public void deleteLike(Integer userId, Integer filmId) throws ResponseStatusException {
-        if (userId <=0 || filmId <= 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "id и filmId не могут быть отрицательныи либо равены 0");
-        }
-        films.deleteLike(userId, filmId);
-        log.info("Пользователь c id=" + userId + " удалил лайк с фильма id= " + filmId);
+    /**
+     * Метод по возвращению всех фильмов.
+     * @return Возвращает все фильмы. {@link FilmStorage#findAllFilms()}
+     */
+    public List<Film> findAllFilms() {
+        return filmStorage.findAllFilms();
     }
 
-    public List<Film> getSortedFilms(Integer count) throws ResponseStatusException {
-        if (count <= 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "count не может быть отрицательным либо равен 0");
-        }
-        Comparator<Film> sortFilm = (f1, f2) -> {
-            Integer filmLikes1 = f1.getLikes().size();
-            Integer filmLikes2 = f2.getLikes().size();
-            return -1 * filmLikes1.compareTo(filmLikes2);
-
-        };
-        return films.getFilmsList().stream().sorted(sortFilm).limit(count)
-                .collect(Collectors.toCollection(ArrayList::new));
+    /**
+     * Метод по нахождению фильма по его id.
+     * @param id идентификатор фильма.
+     * @return Возвращает фильм по его id. {@link FilmStorage#findFilmById(Long)}
+     */
+    public Film findFilmById(Long id) {
+        return filmStorage.findFilmById(id);
     }
 
-    public Film getFilm(Integer filmId) {
-        if (filmId <= 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "id не может быть отрицательным либо равен 0");
+    /**
+     * Метод по нахождению популярных по количеству лайков фильмов.
+     * @param count количество фильмов, по умолчанию 10.
+     * @return Возвращает список популярных фильмов согласна параметру count.
+     */
+    public List<Film> findPopularFilms(Integer count, Integer genreId, Integer year) {
+        if (genreId != -1 || year != -1) {
+            return filmStorage.getPopularFilmByDateAndGenre(count, genreId, year);
+        } else {
+            return filmStorage.getPopularFilm(count);
         }
-        return films.getFilm(filmId);
     }
 
-    private void validate(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            log.warn("Валидация не пройдена: отсутствует название фильма.");
-            throw new ValidationException("Название не может быть пустым.");
-        }
-        if (film.getDescription().length() > 200) {
-            log.warn("Валидация не пройдена: описание превышает 200 символов.");
-            throw new ValidationException("Описание превышает 200 символов.");
-        }
-        if (film.getDuration() < 0) {
-            log.warn("Валидация не пройдена: отрицательная продолжительность фильма.");
-            throw new ValidationException("Продолжительность фильма не может быть отрицательным.");
-        }
-
-        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            log.warn("Валидация не пройдена: дата релиза раньше {}", MIN_RELEASE_DATE);
-            throw new ValidationException("Дата релиза фильма должна быть после " + MIN_RELEASE_DATE);
-        }
-
+    public List<Film> findByParameter(String query, String by) {
+        return filmStorage.findByParameter(query, by);
     }
 
+    public List<Film> findFilmBySorting(Long directorId, String sortBy) {
+        return filmStorage.findFilmBySorting(directorId, sortBy);
+    }
+
+    public void deleteFilmById(Long id) {
+        filmStorage.deleteFilmById(id);
+    }
+
+
+
+    /**
+     * Метод нахождения общих фильмов у друзей.
+     * @param friendId идентификатор друга.
+     * @param userId идентификатор пользователя.
+     */
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return filmStorage.getCommonFilms(userStorage.findUserById(userId).getId(),
+                userStorage.findUserById(friendId).getId());
+    }
 }
+
+

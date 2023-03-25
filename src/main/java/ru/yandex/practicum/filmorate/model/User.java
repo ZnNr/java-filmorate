@@ -1,38 +1,42 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Past;
+import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
-    @EqualsAndHashCode.Exclude
-    private Integer id;
-    //@Email(message = "Адрес электронной почты не может быть пустым и должен содержать символ @.")
-    private String email;
-    //@NotBlank //(message = "Логин не может быть пустым или null")
+
+    private Long id;
+
+    private Set<Long> friends =  new HashSet<>();
+
+    @NotBlank(message = "Логин не должен содержать пробелы или быть пустым")
+    @Pattern(regexp = "^\\S*$", message = "Логин не должен содержать пробелы")
     private String login;
+
     private String name;
-   // @Past(message = "Дата рождения не может быть в будущем")
+
+    @NotBlank(message = "email не должен содержать пробелы или быть пустым")
+    @Email(message = "Неверный email. Пожалуйста введите верный email.")
+    private String email;
+
+    @Past(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
-    private final Set<User> friends = new HashSet<>();
 
-    public Map<String, Object> toMap() {
-        Map<String, Object> values = new HashMap<>();
-        values.put("person_id", id);
-        values.put("email", email);
-        values.put("login", login);
-        values.put("name", name);
-        values.put("birthday", birthday);
-        return values;
-    }
 
+    private List<Long> subscribers;
 }
-

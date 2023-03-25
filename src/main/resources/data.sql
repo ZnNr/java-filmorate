@@ -1,32 +1,15 @@
-INSERT INTO MPA (mpa_name) SELECT 'G'
-WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'G');
 
-INSERT INTO MPA (mpa_name) SELECT 'PG'
-WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'PG');
+INSERT INTO mpa_rating (mpa_id, mpa_name)
+VALUES (1, 'G'),
+       (2, 'PG'),
+       (3, 'PG-13'),
+       (4, 'R'),
+       (5, 'NC-17') ON CONFLICT DO NOTHING;
 
-INSERT INTO MPA (mpa_name) SELECT 'PG-13'
-WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'PG-13');
-
-INSERT INTO MPA (mpa_name) SELECT 'R'
-WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'R');
-
-INSERT INTO MPA (mpa_name) SELECT 'NC-17'
-WHERE NOT EXISTS (SELECT mpa_name FROM MPA WHERE mpa_name = 'NC-17');
-
-INSERT INTO GENRE (genre_name) SELECT 'Комедия'
-WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Комедия');
-
-INSERT INTO GENRE (genre_name) SELECT 'Драма'
-WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Драма');
-
-INSERT INTO GENRE (genre_name) SELECT 'Мультфильм'
-WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Мультфильм');
-
-INSERT INTO GENRE (genre_name) SELECT 'Триллер'
-WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Триллер');
-
-INSERT INTO GENRE (genre_name) SELECT 'Документальный'
-WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Документальный');
-
-INSERT INTO GENRE (genre_name) SELECT 'Боевик'
-WHERE NOT EXISTS (SELECT genre_name FROM GENRE WHERE genre_name = 'Боевик');
+INSERT INTO genre (genre_id, genre_name)
+VALUES (1, 'Комедия'),
+       (2, 'Драма'),
+       (3, 'Мультфильм'),
+       (4, 'Триллер'),
+       (5, 'Документальный'),
+       (6, 'Боевик') ON CONFLICT DO NOTHING;

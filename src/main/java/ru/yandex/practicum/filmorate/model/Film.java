@@ -1,41 +1,45 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.validation.annotation.AfterOrEqualDate;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
-@Data
+
 @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Film {
-    @EqualsAndHashCode.Exclude
-    private Integer id;
-    //@NotBlank(message = "Название не может быть пустым")
+
+    private Long id;
+
+    Set<Long> likesUserId = new HashSet<>();
+
+    @NotBlank(message = "Название не должно быть пустым")
     private String name;
-    //@Size(max = 200, message = "Максимальная длина описания 200 символов")
+
+    @Size(max = 200, message = "Максимальная длина описания не должна превышать 200 символов")
     private String description;
-    @PastOrPresent(message = "Некорректная дата релиза")
+
+    @AfterOrEqualDate(value = "1895-12-28", message = "Дата релиза фильма не соответствует параметрам")
     private LocalDate releaseDate;
-    //@Positive(message = "Некорректная продолжительность фильма")
-    private Integer duration;
-    @EqualsAndHashCode.Exclude
-    private final Set<User> likes = new HashSet<>();
-    @EqualsAndHashCode.Exclude
-    private final Set<Genre> genres = new TreeSet<>();
-    @EqualsAndHashCode.Exclude
-    @NotNull
+
+    @Positive(message = "Продолжительность фильма не может быть отрицательной")
+    private long duration;
+
     private Mpa mpa;
 
-    public Map<String, Object> toMap() {
-        Map<String, Object> values = new HashMap<>();
-        values.put("name", name);
-        values.put("description", description);
-        values.put("release_date", releaseDate);
-        values.put("duration", duration);
-        values.put("mpa", mpa.getId());
-        return values;
-    }
+    private Set<Genre> genres;
+
+    private Set<Director> directors;
 }
+

@@ -1,72 +1,81 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exceptions.ElementNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
-    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
-    private final Map<Integer, Film> films = new HashMap<>();
-    private int idGen = 1;
 
-    @Autowired
-    public InMemoryFilmStorage() {
-    }
+    private long generatedId = 1;
 
-    //Добавляем новый фильм в коллекцию
+    private final Map<Long, Film> films = new HashMap<>();
+
+
     @Override
     public Film addFilm(Film film) {
-        film.setId(idGen++);
+        film.setId(generatedId++);
         films.put(film.getId(), film);
-        log.info("Добавлен фильм: {}", film);
         return film;
     }
 
-    //Обновляем фильм в коллекции, проверив его наличие
     @Override
     public Film updateFilm(Film film) {
-        getFilmById(film.getId());
+        if (!films.containsKey(film.getId())) {
+            throw new ElementNotFoundException(
+                    String.format("Не возможно обновить данные о фильм с несуществующим id - %d", film.getId()));
+        }
+
         films.put(film.getId(), film);
-        log.info("Фильм обновлен - , {}");
         return film;
     }
 
-    //Получаем список всех фильмов по запросу
     @Override
-    public List<Film> getFilms() {
-        List<Film> filmList = new ArrayList<>();
-        for (Map.Entry<Integer, Film> entry : films.entrySet()) {
-            filmList.add(entry.getValue());
-        }
-        return filmList;
+    public List<Film> findAllFilms() {
+        return new ArrayList<>(films.values());
     }
 
-    //Получаем один фильм
     @Override
-    public Film getFilmById(Integer filmId) {
-        if (!films.containsKey(filmId)) {
-            log.error("Такого фильма не существует!, {}", filmId);
-            throw new NotFoundException("Такого фильма не существует!");
+    public Film findFilmById(Long id) {
+        if (!films.containsKey(id)) {
+            throw new ElementNotFoundException(String.format("Фильм с id-%d не найден", id));
         }
-        return films.get(filmId);
+        return films.get(id);
     }
 
+    @Override
+    public List<Film> getPopularFilm(Integer count) {
+        return null;
+    }
 
+    @Override
+    public List<Film> findByParameter(String query, String by) {
+        return null;
+    }
 
+    @Override
+    public List<Film> findFilmBySorting(Long directorId, String sortBy) {
+        return null;
+    }
 
+    @Override
+    public void deleteFilmById(Long id) {
+        films.remove(id);
+    }
 
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return null;
+    }
 
-
+    @Override
+    public List<Film> getPopularFilmByDateAndGenre(Integer count, Integer genreId, Integer year) {
+        return null;
+    }
 }

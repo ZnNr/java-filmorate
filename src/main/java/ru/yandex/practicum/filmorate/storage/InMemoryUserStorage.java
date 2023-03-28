@@ -1,71 +1,151 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.ElementNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.UserAlreadyExistException;
+import ru.yandex.practicum.filmorate.model.Subscriber;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class InMemoryUserStorage implements UserStorage {
 
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
-    private final HashMap<Integer, User> users = new HashMap<>();
-    private int idGen = 1;
+    private final JdbcTemplate jdbcTemplate;
+    private long generatedId = 1;
 
-    @Autowired
-    public InMemoryUserStorage() {
+    private final Map<Long, User> users = new HashMap<>();
+
+
+    private long generateId() {
+        return generatedId++;
     }
 
-    //Добавляем пользователя
     @Override
-    public User createUser(User user) {
-        user.setId(idGen);
-        users.put(idGen, user);
-        idGen++;
-        log.info("Создан пользователь с ID {}: {}", user.getId(), user);
+    public User addUser(User user) {
+        if (users.values().stream().anyMatch(u -> u.getEmail().equals(user.getEmail()))) {
+            throw new UserAlreadyExistException(String.format("Пользователь с почтой %s уже существует", user.getEmail()));
+        }
+
+        user.setId(generatedId++);
+        users.put(user.getId(), user);
         return user;
     }
 
-    //Обновляем пользователя
+
     @Override
     public User updateUser(User user) {
-        if (users.containsKey(user.getId())) {
-            users.put(user.getId(), user);
-        } else {
-            log.warn("Не найден пользователь при попытке обновления.");
-            throw new NotFoundException("Пользователь с ID: " + user.getId() + " не существует.");
+        if (!users.containsKey(user.getId())) {
+            throw new ElementNotFoundException(
+                    String.format("Не возможно обновить данные пользователя с несуществующем id - %d", user.getId()));
         }
-        log.info("Обновлен пользователь с ID: {}", user.getId());
+
+        users.put(user.getId(), user);
         return user;
     }
 
-    //Получаем список всех пользователей по запросу
     @Override
-    public List<User> getUsers() {
-        List<User> userList = new ArrayList<>();
-        for (Map.Entry<Integer, User> entry : users.entrySet()) {
-            userList.add(entry.getValue());
+    public User findUserById(Long userId) {
+        if (!users.containsKey(userId)) {
+            throw new ElementNotFoundException(
+                    String.format("Пользователь с id - %d не найден", userId));
         }
-        return userList;
+        return users.get(userId);
     }
 
-    //Получаем конкретного пользователя
     @Override
-    public User getUserById(int id) {
-        if (users.containsKey(id)) {
-            return users.get(id);
-        } else {
-            log.warn("Не найден пользователь при поиске по ID.");
-            throw new NotFoundException("Пользователь с ID: " + id + " не существует.");
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users.values());
+    }
+
+    @Override
+    public void deleteUserById(Long id) {
+        users.remove(id);
+    }
+
+    @Override
+    public boolean containsUser(Long id) {
+        return get(id).isPresent();
+    }
+
+    @Override
+    public Optional<User> get(Long id) {
+        log.info("Поиск юзера по id={}", id);
+        String sql = "SELECT U.*, group_concat(S.SUBSCRIBER separator ',') AS SUBSCRIBERS\n" +
+                "FROM USERS U\n" +
+                "LEFT JOIN SUBSCRIBES S ON U.ID = S.AUTHOR WHERE U.ID = ?\n" +
+                "GROUP BY U.ID";
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, this::userBuilder, id));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
         }
     }
+
+    public List<User> getSubscribers(Long id) {
+        log.info("Поиск всех подписчиков");
+        String sql = "SELECT U.*\n" +
+                "FROM SUBSCRIBES\n" +
+                "JOIN USERS U on U.ID = SUBSCRIBES.SUBSCRIBER\n" +
+                "WHERE AUTHOR=?";
+        return jdbcTemplate.query(sql, this::userBuilder, id);
+    }
+
+    private User userBuilder(ResultSet rs, int rowNum) throws SQLException {
+        String subscribers;
+        try {
+            subscribers = rs.getString("SUBSCRIBERS");
+        } catch (SQLException e) {
+            subscribers = null;
+        }
+        List<Long> subscribersList = subscribers != null ? Arrays
+                .stream(subscribers.split(","))
+                .map(Long::valueOf)
+                .collect(Collectors.toList()) : null;
+        return User.builder()
+                .id(rs.getLong("ID"))
+                .email(rs.getString("EMAIL"))
+                .login(rs.getString("LOGIN"))
+                .name(rs.getString("NAME"))
+                .birthday(rs.getDate("BIRTHDAY").toLocalDate())
+                .subscribers(subscribersList)
+                .build();
+    }
+
+    private Subscriber subscribeBuilder(ResultSet rs, int rowNum) throws SQLException {
+        return Subscriber.builder()
+                .authorId(rs.getInt("AUTHOR"))
+                .subscriberId(rs.getInt("SUBSCRIBER"))
+                .build();
+    }
+
+    @Override
+    public void createSubscriber(Long authorId, Long subscriberId) {
+        String sql = "INSERT INTO SUBSCRIBES (AUTHOR, SUBSCRIBER) VALUES (?, ?)";
+        jdbcTemplate.update(sql, authorId, subscriberId);
+        log.info("Подписка {} на {} создана", subscriberId, authorId);
+    }
+
+    @Override
+    public boolean checkIsSubscriber(Long authorId, Long subscriberId) {
+        String sql = "SELECT * FROM SUBSCRIBES WHERE AUTHOR=? AND SUBSCRIBER=?";
+        return !jdbcTemplate.query(sql, this::subscribeBuilder, authorId, subscriberId).isEmpty();
+    }
+
+    @Override
+    public void deleteSubscriber(Long authorId, Long subscriberId) {
+        String sql = "DELETE FROM SUBSCRIBES WHERE AUTHOR=? AND SUBSCRIBER=?";
+        jdbcTemplate.update(sql, authorId, subscriberId);
+        log.info("Подписка {} на {} удалена", subscriberId, authorId);
+    }
+
 }

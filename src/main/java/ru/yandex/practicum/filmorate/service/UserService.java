@@ -1,99 +1,205 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.time.LocalDate;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.FriendDao;
+import ru.yandex.practicum.filmorate.dao.RecommendationDao;
+import ru.yandex.practicum.filmorate.exceptions.ElementNotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.utility.constants.EventType;
+import ru.yandex.practicum.filmorate.utility.constants.Operation;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 
 @Service
-@Slf4j
 public class UserService {
 
     private final UserStorage userStorage;
 
+    private final FriendDao friendDao;
 
-    @Autowired
-    public UserService(UserStorage userStorage) {
+    private final EventService eventService;
+
+    private final FilmStorage filmStorage;
+
+    private final RecommendationDao recommendationDao;
+
+
+
+    public UserService(@Qualifier("userDbStorage")
+                       UserStorage userStorage,
+                       FriendDao friendDao,
+                       EventService eventService,
+                       @Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       RecommendationDao recommendationDao) {
         this.userStorage = userStorage;
+        this.friendDao = friendDao;
+        this.eventService = eventService;
+        this.filmStorage = filmStorage;
+        this.recommendationDao = recommendationDao;
     }
 
+    /**
+     * Метод по созданию пользователя. {@link UserStorage#addUser(User)}
+     * @param user фильм, который необходимо создать.
+     * @return Возвращает созданный объект.
+     */
     public User createUser(User user) {
-         validate(user);
-        return userStorage.createUser(user);
-    }
-
-    public User updateUser(User user) {
-        validate(user);
-        return userStorage.updateUser(user);
-    }
-
-    public List<User> getUsers() {
-        return userStorage.getUsers();
-    }
-
-    public User getUserById(int id) {
-        return userStorage.getUserById(id);
-    }
-
-    public void addFriend(int id, int friendId) {
-        User user = userStorage.getUserById(id);
-        User friend = userStorage.getUserById(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(id);
-        log.info("Пользователи с ID {} и {} теперь друзья", id, friendId);
-    }
-
-    public void deleteFriend(int id, int friendId) {
-        userStorage.getUserById(id).getFriends().remove(friendId);
-        userStorage.getUserById(friendId).getFriends().remove(id);
-        log.info("Пользователи с ID {} и {} больше не друзья", id, friendId);
-    }
-
-    public List<User> getFriends(int id) {
-        List<User> friends = new ArrayList<>();
-        User user = userStorage.getUserById(id);
-        if (user.getFriends() != null) {
-            for (int userId : user.getFriends()) {
-                friends.add(userStorage.getUserById(userId));
-            }
-        }
-        return friends;
-    }
-
-    public List<User> findCommonFriends(int id, int friendId) {
-        List<User> commonFriends = new ArrayList<>();
-        User user = userStorage.getUserById(id);
-        User friends = userStorage.getUserById(friendId);
-        for (Integer friend : user.getFriends()) {
-            if (friends.getFriends().contains(friend)) {
-                commonFriends.add(userStorage.getUserById(friend));
-            }
-        }
-        return commonFriends;
-    }
-
-    private void validate(User user) {
-        if ((user.getEmail() == null || user.getEmail().isBlank()) || !user.getEmail().contains("@")) {
-            log.warn("Валидация не пройдена: email либо пустой, либо не содержит @.");
-            throw new ValidationException("Адрес электронной почты не может быть пустым и должен содержать символ @.");
-        }
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            log.warn("Валидация не пройдена: логин либо пустой, либо содержит пробелы.");
-            throw new ValidationException("Логин не должен быть пустым и не должен содержать пробелы.");
-        }
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("Валидация не пройдена: дата рождения в будущем.");
-            throw new ValidationException("Дата рождения не может быть в будущем.");
+
+        return userStorage.addUser(user);
+    }
+
+    /**
+     * Метод по модифицированию данных пользователя.
+     * @param user фильм, который необходимо изменить.
+     * @return Возвращает измененного пользователя. {@link UserStorage#updateUser(User)}
+     */
+    public User updateUser(User user) {
+        return userStorage.updateUser(user);
+    }
+
+    /**
+     * Метод по нахождению всех пользователей.
+     * @return Возвращает список всех пользователей. {@link UserStorage#getAllUsers()}
+     */
+    public List<User> getAllUsers() {
+        return userStorage.getAllUsers();
+    }
+
+    /**
+     * Метод по нахождению пользователя по id.
+     * @param userId идентификатор пользователя.
+     * @return Возвращает пользователя по его id. {@link UserStorage#findUserById(Long)}
+     */
+    public User findUserById(Long userId) {
+        return userStorage.findUserById(userId);
+    }
+
+    /**
+     * Метод по нахождению всех друзей определенного пользователя.
+     * @param id идентификатор пользователя.
+     * @return возвращает список друзей пользователя.
+     */
+    public List<User> findFriends(Long id) {
+        userStorage.findUserById(id);
+        return friendDao.findAllFriends(id);
+    }
+
+    /**
+     * Метод по нахождения общих друзей.
+     * @param id идентификатор пользователя.
+     * @param otherId идентификатор другого пользователя.
+     * @return Возвращает список общих друзей пользователя с id и otherId.
+     */
+    public List<User> findCommonFriends(Long id, Long otherId) {
+        userStorage.findUserById(id);
+        userStorage.findUserById(otherId);
+
+        return friendDao.findCommonFriends(id, otherId);
+    }
+
+    /**
+     * Метод по добавлению в друзья.
+     * @param id идентификатор пользователя который добавляет в друзья.
+     * @param friendId идентификатор того, кого добавляют в друзья.
+     */
+    public void addToFriends(Long id, Long friendId) {
+        userStorage.findUserById(id);
+        userStorage.findUserById(friendId);
+
+        Event event = new Event(Instant.now().toEpochMilli(), id, EventType.FRIEND, Operation.ADD, friendId);
+
+        friendDao.addToFriends(id, friendId);
+        eventService.addEvent(event);
+    }
+
+    /**
+     * Метод по удалению из друзей.
+     * @param id идентификатор пользователя.
+     * @param friendId идентификатор пользователя, который является другом.
+     */
+    public void deleteFromFriends(Long id, long friendId) {
+        userStorage.findUserById(id);
+        userStorage.findUserById(friendId);
+
+        friendDao.deleteFromFriends(id, friendId);
+        eventService.addEvent(new Event(Instant.now().toEpochMilli(),id, EventType.FRIEND, Operation.REMOVE, friendId));
+    }
+
+    public void deleteUserById(Long id) {
+        userStorage.deleteUserById(id);
+        eventService.deleteEvent(id);
+    }
+
+    /**
+     * Получения списка рекомендованных фильмов
+     * @param id - айди юзера
+     * @return - список фильмов
+     */
+    public List<Film> getRecommendationFilms(long id) {
+        userStorage.findUserById(id);
+        List<Film> resultList = new ArrayList<>();
+        Optional<Long> idCommonFilmsWithCurrentId = recommendationDao.getIdCommonFilmWithCurrentId(id);
+        if (idCommonFilmsWithCurrentId.isPresent()) {
+            List<Long> listFilmsNotInId =
+                    recommendationDao.getLikedFilmWithoutLiked(Optional.of(id), idCommonFilmsWithCurrentId);
+            if (!listFilmsNotInId.isEmpty()) {
+                resultList = recommendationDao.getListFilm(listFilmsNotInId);
+            }
         }
+        return resultList;
+    }
+
+
+    public List<User> getMutualFriendsById(Long firstUserId, Long secondUserId) {
+        if (!(userStorage.containsUser(firstUserId) && userStorage.containsUser(secondUserId))) {
+            throw new ElementNotFoundException("Пользователь с id:" + firstUserId + "не может быть найден");
+        }
+        Set<Long> userFriendsIds = userStorage.getSubscribers(firstUserId).stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> otherUserFriendsIds = userStorage.getSubscribers(secondUserId).stream().map(User::getId).collect(Collectors.toSet());
+        userFriendsIds.retainAll(otherUserFriendsIds);
+        List<User> commonFriends = new ArrayList<>();
+        userFriendsIds.forEach(friendId -> userStorage.get(friendId).ifPresent(commonFriends::add));
+        return commonFriends;
+    }
+
+    public void removeSubscribe(Long authorId, Long subscriberId) {
+        if (!userStorage.containsUser(authorId) || !userStorage.containsUser(subscriberId)) {
+            throw new ElementNotFoundException(String.format("Юзера с id %d не существует", subscriberId));
+        }
+        if (!isSubscribe(authorId, subscriberId)) {
+            throw new ElementNotFoundException("Вы не подписаны на этого автора");
+        }
+        userStorage.deleteSubscriber(authorId, subscriberId);
+    }
+
+    public boolean isSubscribe(Long authorId, Long subscriberId) {
+        return userStorage.checkIsSubscriber(authorId, subscriberId);
+    }
+
+
+    public void makeSubscribe(Long authorId, Long subscriberId) {
+        if (!userStorage.containsUser(authorId) || !userStorage.containsUser(subscriberId)) {
+            throw new ElementNotFoundException("Пользователя с id" + subscriberId + " не существует.");
+        }
+        if (isSubscribe(authorId, subscriberId)) {
+            throw new ElementNotFoundException("");
+        }
+        userStorage.createSubscriber(authorId, subscriberId);
     }
 
 

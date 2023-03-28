@@ -1,43 +1,45 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
+import ru.yandex.practicum.filmorate.validation.annotation.AfterOrEqualDate;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
+
+@Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Film {
 
-    protected int id;
+    private Long id;
 
-    @NotBlank(message = "Название не может быть пустым")
+    Set<Long> likesUserId = new HashSet<>();
+
+    @NotBlank(message = "Название не должно быть пустым")
     private String name;
 
-    @Size(max = 200, message = "Максимальная длина описания - 200 символов")
+    @Size(max = 200, message = "Максимальная длина описания не должна превышать 200 символов")
     private String description;
 
-    @NotNull
+    @AfterOrEqualDate(value = "1895-12-28", message = "Дата релиза фильма не соответствует параметрам")
     private LocalDate releaseDate;
 
-    @Positive(message = "Продолжительность фильма должна быть положительной")
-    private int duration;
+    @Positive(message = "Продолжительность фильма не может быть отрицательной")
+    private long duration;
 
-    private Set<Integer> likes = new HashSet<>();
+    private Mpa mpa;
 
-    public Film(int id, String name, String description, LocalDate releaseDate, int duration) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.likes = new HashSet<>();
-    }
+    private Set<Genre> genres;
+
+    private Set<Director> directors;
 }
+
